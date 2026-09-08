@@ -2,10 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Veil</title>
-<link id="favicon" rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23101010'/%3E%3Cpath d='M50 17L78 29V48C78 67 66 80 50 86C34 80 22 67 22 48V29L50 17Z' fill='none' stroke='%23fff' stroke-width='7'/%3E%3C/svg%3E">
+
+<link
+    id="favicon"
+    rel="icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23101010'/%3E%3Cpath d='M50 15L80 28V48C80 69 67 84 50 90C33 84 20 69 20 48V28L50 15Z' fill='none' stroke='%23fff' stroke-width='7'/%3E%3C/svg%3E"
+>
+
 <style>
+
 :root {
     --bg: #101010;
     --bg2: #151515;
@@ -14,13 +21,16 @@
     --panel2: #202020;
     --border: #2b2b2b;
     --text: #f2f2f2;
-    --muted: #8d8d8d;
+    --muted: #888888;
     --accent: #ffffff;
     --accentText: #111111;
     --danger: #ff5d5d;
-    --shadow: rgba(0,0,0,.45);
     --newtab: #101010;
 }
+
+/* =========================
+   GLOBAL RESET
+========================= */
 
 * {
     box-sizing: border-box;
@@ -35,7 +45,19 @@ body {
     overflow: hidden;
     background: var(--bg);
     color: var(--text);
-    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+}
+
+body {
+    /* Prevent the dark edge/gradient shown in the screenshot */
+    background: var(--bg);
 }
 
 button,
@@ -45,7 +67,7 @@ input {
 
 button {
     border: 0;
-    color: inherit;
+    outline: none;
 }
 
 button:focus,
@@ -53,41 +75,85 @@ input:focus {
     outline: none;
 }
 
+
+/* =========================
+   MAIN BROWSER
+========================= */
+
 #browser {
     width: 100%;
     height: 100%;
     display: flex;
     flex-direction: column;
     background: var(--bg);
+    overflow: hidden;
 }
 
+
 /* =========================
-   TOP CHROME
-   ========================= */
+   CHROME
+========================= */
 
 .chrome {
+    width: 100%;
+    flex-shrink: 0;
     background: var(--bg2);
     border-bottom: 1px solid var(--border);
-    box-shadow: 0 4px 20px var(--shadow);
+
+    /* No large shadow that can create the black edge */
+    box-shadow: none;
+
+    position: relative;
     z-index: 100;
 }
 
+
+/* =========================
+   TABS
+========================= */
+
 .tabs-row {
+    width: 100%;
     height: 42px;
+
     display: flex;
     align-items: flex-end;
-    padding: 0 8px;
+
+    padding:
+        0
+        7px
+        0
+        7px;
+
     gap: 4px;
+
+    overflow: hidden;
 }
+
+
+/*
+    IMPORTANT:
+
+    The tabs container no longer takes the + button away
+    from the end.
+
+    The + button is now immediately after the last tab,
+    exactly like a normal browser.
+*/
 
 .tabs {
     height: 100%;
+
     display: flex;
     align-items: flex-end;
+
     gap: 4px;
-    flex: 1;
+
     min-width: 0;
+
     overflow-x: auto;
+    overflow-y: hidden;
+
     scrollbar-width: none;
 }
 
@@ -95,21 +161,49 @@ input:focus {
     display: none;
 }
 
+
+/* =========================
+   INDIVIDUAL TAB
+========================= */
+
 .tab {
     height: 36px;
+
     min-width: 145px;
     max-width: 235px;
+
+    flex: 0 0 auto;
+
     display: flex;
     align-items: center;
+
     gap: 8px;
-    padding: 0 9px 0 12px;
-    border-radius: 9px 9px 0 0;
+
+    padding:
+        0
+        8px
+        0
+        11px;
+
+    border-radius:
+        9px
+        9px
+        0
+        0;
+
     background: transparent;
+
     color: var(--muted);
+
     cursor: pointer;
-    position: relative;
+
     user-select: none;
-    transition: .15s ease;
+
+    position: relative;
+
+    transition:
+        background .14s ease,
+        color .14s ease;
 }
 
 .tab:hover {
@@ -122,41 +216,101 @@ input:focus {
     color: var(--text);
 }
 
+
+/* =========================
+   TAB ICON
+========================= */
+
 .tab-icon {
-    width: 15px;
-    height: 15px;
+    width: 16px;
+    height: 16px;
+
+    flex: 0 0 16px;
+
     border-radius: 4px;
-    flex: 0 0 15px;
-    background: var(--panel2);
-    display: grid;
-    place-items: center;
+
+    background: transparent;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
     overflow: hidden;
+
+    /*
+        Prevent the little favicon artifact
+        from overflowing the tab.
+    */
+    line-height: 0;
 }
 
 .tab-icon img {
     width: 100%;
     height: 100%;
+
     object-fit: cover;
+
+    display: block;
 }
 
-.tab-title {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    flex: 1;
-    font-size: 12px;
+.default-tab-icon {
+    width: 7px;
+    height: 7px;
+
+    border-radius: 50%;
+
+    background: var(--accent);
+
+    display: block;
 }
+
+
+/* =========================
+   TAB TITLE
+========================= */
+
+.tab-title {
+    flex: 1;
+
+    min-width: 0;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+
+    font-size: 12px;
+
+    line-height: 1;
+}
+
+
+/* =========================
+   TAB CLOSE
+========================= */
 
 .tab-close {
     width: 21px;
     height: 21px;
+
+    flex: 0 0 21px;
+
     border-radius: 5px;
+
     background: transparent;
+
     color: var(--muted);
+
     cursor: pointer;
-    display: grid;
-    place-items: center;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
     font-size: 15px;
+
+    line-height: 1;
 }
 
 .tab-close:hover {
@@ -164,15 +318,38 @@ input:focus {
     color: var(--text);
 }
 
+
+/* =========================
+   NEW TAB BUTTON
+========================= */
+
 .new-tab {
     width: 32px;
     height: 32px;
+
+    flex: 0 0 32px;
+
     margin-bottom: 2px;
+
     border-radius: 8px;
+
     background: transparent;
+
     color: var(--muted);
+
     cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
     font-size: 21px;
+
+    line-height: 1;
+
+    transition:
+        background .14s ease,
+        color .14s ease;
 }
 
 .new-tab:hover {
@@ -180,35 +357,62 @@ input:focus {
     color: var(--text);
 }
 
+
 /* =========================
    TOOLBAR
-   ========================= */
+========================= */
 
 .toolbar {
+    width: 100%;
     height: 52px;
+
     display: flex;
     align-items: center;
+
     gap: 6px;
-    padding: 6px 9px;
+
+    padding:
+        6px
+        9px;
+
     background: var(--panel);
+
+    overflow: hidden;
 }
+
+
+/* =========================
+   NAV BUTTONS
+========================= */
 
 .nav-buttons {
     display: flex;
     gap: 2px;
+
+    flex: 0 0 auto;
 }
 
 .tool-btn {
     width: 35px;
     height: 35px;
+
     border-radius: 8px;
+
     background: transparent;
+
     color: var(--muted);
+
     cursor: pointer;
-    display: grid;
-    place-items: center;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
     font-size: 18px;
-    transition: .15s ease;
+
+    transition:
+        background .14s ease,
+        color .14s ease;
 }
 
 .tool-btn:hover {
@@ -217,21 +421,40 @@ input:focus {
 }
 
 .tool-btn:disabled {
-    opacity: .3;
+    opacity: .28;
     cursor: default;
 }
 
+
+/* =========================
+   ADDRESS BAR
+========================= */
+
 .address-wrap {
     flex: 1;
-    height: 35px;
+
     min-width: 0;
+
+    height: 35px;
+
     display: flex;
     align-items: center;
+
     border-radius: 18px;
+
     background: var(--bg2);
+
     border: 1px solid var(--border);
-    padding: 0 8px 0 13px;
-    transition: .15s ease;
+
+    padding:
+        0
+        7px
+        0
+        13px;
+
+    transition:
+        border-color .14s ease,
+        background .14s ease;
 }
 
 .address-wrap:focus-within {
@@ -241,16 +464,25 @@ input:focus {
 
 .address-icon {
     color: var(--muted);
+
     margin-right: 8px;
-    font-size: 13px;
+
+    font-size: 14px;
+
+    flex: 0 0 auto;
 }
 
 #address {
     flex: 1;
+
     min-width: 0;
-    background: transparent;
+
     border: 0;
+
+    background: transparent;
+
     color: var(--text);
+
     font-size: 13px;
 }
 
@@ -258,13 +490,30 @@ input:focus {
     color: #666;
 }
 
+
+/* =========================
+   BOOKMARK BUTTON
+========================= */
+
 .address-bookmark {
-    width: 28px;
-    height: 28px;
+    width: 29px;
+    height: 29px;
+
+    flex: 0 0 29px;
+
     border-radius: 50%;
+
     background: transparent;
+
     color: var(--muted);
+
     cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 16px;
 }
 
 .address-bookmark:hover {
@@ -276,15 +525,34 @@ input:focus {
     color: var(--accent);
 }
 
+
+/* =========================
+   THREE DOT BUTTON
+========================= */
+
 .menu-btn {
     width: 36px;
     height: 36px;
+
+    flex: 0 0 36px;
+
     border-radius: 9px;
+
     background: transparent;
+
     color: var(--muted);
+
     cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
     font-size: 20px;
-    letter-spacing: 2px;
+
+    line-height: 1;
+
+    letter-spacing: 1px;
 }
 
 .menu-btn:hover {
@@ -292,73 +560,121 @@ input:focus {
     color: var(--text);
 }
 
+
 /* =========================
-   CONTENT
-   ========================= */
+   VIEWPORT
+========================= */
 
 .viewport {
     position: relative;
+
     flex: 1;
+
     min-height: 0;
+
+    width: 100%;
+
     background: var(--bg);
+
+    overflow: hidden;
 }
 
 .page {
     width: 100%;
     height: 100%;
+
     display: none;
+
+    background: var(--bg);
 }
 
 .page.active {
     display: block;
 }
 
+
+/* =========================
+   ENGINE FRAME
+========================= */
+
 .engine-frame {
     width: 100%;
     height: 100%;
+
+    display: block;
+
     border: 0;
-    background: white;
+
+    background: #ffffff;
 }
+
 
 /* =========================
    NEW TAB
-   ========================= */
+========================= */
 
 .newtab-page {
     width: 100%;
     height: 100%;
+
     overflow: auto;
-    background:
-        var(--newtab);
+
+    background-color: var(--newtab);
+
     background-size: cover;
+
     background-position: center;
+
+    background-repeat: no-repeat;
+
     position: relative;
 }
 
 .newtab-overlay {
+    width: 100%;
     min-height: 100%;
+
     display: flex;
+
     align-items: center;
     justify-content: center;
+
     padding: 40px 20px;
-    background: rgba(0,0,0,.12);
+
+    background: rgba(0,0,0,.08);
 }
 
 .newtab-center {
-    width: min(700px, 100%);
+    width: min(700px,100%);
+
     text-align: center;
 }
 
 .veil-mark {
     width: 74px;
     height: 74px;
-    margin: 0 auto 22px;
+
+    margin:
+        0
+        auto
+        22px;
+
     border-radius: 22px;
-    background: rgba(255,255,255,.055);
-    border: 1px solid rgba(255,255,255,.08);
-    display: grid;
-    place-items: center;
-    box-shadow: 0 20px 70px rgba(0,0,0,.35);
+
+    background:
+        rgba(255,255,255,.045);
+
+    border:
+        1px solid
+        rgba(255,255,255,.08);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    box-shadow:
+        0 20px 60px
+        rgba(0,0,0,.28);
 }
 
 .veil-mark svg {
@@ -367,82 +683,148 @@ input:focus {
 }
 
 .newtab-title {
-    font-size: clamp(42px, 7vw, 70px);
+    font-size:
+        clamp(
+            42px,
+            7vw,
+            70px
+        );
+
     font-weight: 700;
+
     letter-spacing: -3px;
+
     line-height: 1;
 }
 
 .newtab-subtitle {
     color: var(--muted);
+
     margin-top: 12px;
+
     font-size: 14px;
 }
 
 .search-box {
-    width: min(620px, 100%);
+    width: min(620px,100%);
+
     height: 54px;
-    margin: 30px auto 0;
+
+    margin:
+        30px
+        auto
+        0;
+
     border-radius: 17px;
-    background: rgba(20,20,20,.9);
-    border: 1px solid var(--border);
+
+    background:
+        rgba(20,20,20,.90);
+
+    border:
+        1px solid
+        var(--border);
+
     display: flex;
     align-items: center;
-    padding: 0 18px;
-    box-shadow: 0 15px 50px rgba(0,0,0,.25);
+
+    padding:
+        0
+        18px;
+
+    box-shadow:
+        0 15px 45px
+        rgba(0,0,0,.20);
 }
 
 .search-box span {
     color: var(--muted);
+
     margin-right: 11px;
 }
 
 .search-box input {
     flex: 1;
+
+    min-width: 0;
+
     border: 0;
+
     background: transparent;
+
     color: var(--text);
+
     font-size: 14px;
 }
 
 .quick-links {
     display: flex;
+
     justify-content: center;
+
     flex-wrap: wrap;
+
     gap: 9px;
+
     margin-top: 22px;
 }
 
 .quick-link {
-    border: 1px solid var(--border);
-    background: rgba(20,20,20,.72);
+    border:
+        1px solid
+        var(--border);
+
+    background:
+        rgba(20,20,20,.72);
+
     color: var(--muted);
-    padding: 9px 13px;
+
+    padding:
+        9px
+        13px;
+
     border-radius: 11px;
+
     cursor: pointer;
+
     font-size: 12px;
 }
 
 .quick-link:hover {
     color: var(--text);
+
     background: var(--panel2);
 }
 
+
 /* =========================
-   MENU
-   ========================= */
+   THREE DOT MENU
+========================= */
 
 .menu {
     position: fixed;
-    top: 83px;
+
+    top: 94px;
+
     right: 10px;
+
     width: 245px;
+
     background: var(--panel);
-    border: 1px solid var(--border);
+
+    border:
+        1px solid
+        var(--border);
+
     border-radius: 13px;
+
     padding: 7px;
-    box-shadow: 0 20px 60px rgba(0,0,0,.5);
+
+    box-shadow:
+        0 20px 60px
+        rgba(0,0,0,.45);
+
     z-index: 1000;
+
     display: none;
 }
 
@@ -453,15 +835,26 @@ input:focus {
 .menu-item {
     width: 100%;
     height: 38px;
-    padding: 0 11px;
+
+    padding:
+        0
+        11px;
+
     border-radius: 8px;
+
     background: transparent;
+
     color: var(--text);
+
     display: flex;
     align-items: center;
+
     gap: 11px;
+
     cursor: pointer;
+
     text-align: left;
+
     font-size: 13px;
 }
 
@@ -471,25 +864,37 @@ input:focus {
 
 .menu-icon {
     width: 20px;
+
     text-align: center;
+
     color: var(--muted);
 }
 
 .menu-separator {
     height: 1px;
+
     background: var(--border);
-    margin: 6px 4px;
+
+    margin:
+        6px
+        4px;
 }
+
 
 /* =========================
    PANELS
-   ========================= */
+========================= */
 
 .backdrop {
     position: fixed;
+
     inset: 0;
-    background: rgba(0,0,0,.55);
+
+    background:
+        rgba(0,0,0,.55);
+
     z-index: 1100;
+
     display: none;
 }
 
@@ -499,30 +904,59 @@ input:focus {
 
 .panel {
     position: fixed;
+
     right: 0;
     top: 0;
+
     height: 100%;
-    width: min(430px, 100%);
+
+    width: min(430px,100%);
+
     background: var(--panel);
-    border-left: 1px solid var(--border);
+
+    border-left:
+        1px solid
+        var(--border);
+
     z-index: 1200;
-    transform: translateX(100%);
-    transition: transform .22s ease;
-    box-shadow: -20px 0 70px rgba(0,0,0,.4);
+
+    transform:
+        translateX(100%);
+
+    transition:
+        transform .22s ease;
+
+    box-shadow:
+        -20px
+        0
+        60px
+        rgba(0,0,0,.40);
+
     display: flex;
+
     flex-direction: column;
 }
 
 .panel.open {
-    transform: translateX(0);
+    transform:
+        translateX(0);
 }
 
 .panel-header {
     height: 65px;
-    padding: 0 20px;
-    border-bottom: 1px solid var(--border);
+
+    padding:
+        0
+        20px;
+
+    border-bottom:
+        1px solid
+        var(--border);
+
     display: flex;
+
     align-items: center;
+
     justify-content: space-between;
 }
 
@@ -533,10 +967,15 @@ input:focus {
 .close-panel {
     width: 32px;
     height: 32px;
+
     border-radius: 8px;
+
     background: transparent;
+
     color: var(--muted);
+
     cursor: pointer;
+
     font-size: 20px;
 }
 
@@ -547,186 +986,413 @@ input:focus {
 
 .panel-body {
     padding: 20px;
+
     overflow-y: auto;
 }
 
+
+/* =========================
+   SETTINGS
+========================= */
+
 .setting-section {
-    margin-bottom: 27px;
+    margin-bottom: 28px;
 }
 
 .setting-title {
     font-size: 12px;
+
     color: var(--muted);
+
     text-transform: uppercase;
+
     letter-spacing: .09em;
+
     margin-bottom: 11px;
 }
 
 .preset-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+
+    grid-template-columns:
+        repeat(2,1fr);
+
     gap: 9px;
 }
 
 .preset {
     min-height: 67px;
-    border: 1px solid var(--border);
+
+    border:
+        1px solid
+        var(--border);
+
     background: var(--bg2);
+
     border-radius: 11px;
+
     cursor: pointer;
+
     text-align: left;
+
     padding: 10px;
+
+    transition:
+        border-color .14s ease,
+        transform .14s ease;
 }
 
 .preset:hover {
-    border-color: #444;
+    border-color: #555;
+
+    transform:
+        translateY(-1px);
 }
 
 .preset-name {
     font-size: 12px;
+
     margin-bottom: 9px;
 }
 
 .preset-preview {
     display: flex;
+
     gap: 5px;
 }
 
 .preset-dot {
     width: 14px;
     height: 14px;
+
     border-radius: 50%;
 }
 
 .input-row {
     display: flex;
+
     align-items: center;
+
     gap: 10px;
+
     margin-bottom: 9px;
 }
 
 .input-label {
     width: 90px;
+
+    flex: 0 0 90px;
+
     font-size: 12px;
+
     color: var(--muted);
 }
 
 .text-input {
     flex: 1;
+
+    min-width: 0;
+
     height: 36px;
+
     border-radius: 8px;
-    border: 1px solid var(--border);
+
+    border:
+        1px solid
+        var(--border);
+
     background: var(--bg2);
+
     color: var(--text);
-    padding: 0 10px;
+
+    padding:
+        0
+        10px;
+
     font-size: 12px;
 }
 
 .color-input {
     width: 45px;
     height: 36px;
+
     padding: 3px;
+
     border-radius: 8px;
-    border: 1px solid var(--border);
+
+    border:
+        1px solid
+        var(--border);
+
     background: var(--bg2);
+
     cursor: pointer;
 }
 
 .primary-btn {
     width: 100%;
+
     height: 39px;
+
     border-radius: 9px;
+
     background: var(--accent);
+
     color: var(--accentText);
+
     cursor: pointer;
+
     font-size: 12px;
+
     font-weight: 600;
+}
+
+.primary-btn:hover {
+    filter: brightness(.92);
 }
 
 .secondary-btn {
     width: 100%;
-    height: 39px;
-    border-radius: 9px;
-    background: var(--panel2);
-    color: var(--text);
-    cursor: pointer;
-    font-size: 12px;
-}
 
-.secondary-btn:hover {
-    background: #292929;
+    height: 39px;
+
+    border-radius: 9px;
+
+    background: var(--panel2);
+
+    color: var(--text);
+
+    cursor: pointer;
+
+    font-size: 12px;
 }
 
 .small-note {
     color: var(--muted);
+
     font-size: 11px;
+
     line-height: 1.5;
+
     margin-top: 8px;
 }
 
+
 /* =========================
    BOOKMARKS
-   ========================= */
+========================= */
 
 .bookmarks-empty {
     text-align: center;
-    padding: 35px 15px;
+
+    padding:
+        35px
+        15px;
+
     color: var(--muted);
+
     font-size: 13px;
 }
 
 .bookmark-row {
     display: flex;
+
     align-items: center;
+
     gap: 10px;
-    border: 1px solid var(--border);
+
+    border:
+        1px solid
+        var(--border);
+
     background: var(--bg2);
+
     border-radius: 10px;
+
     padding: 9px;
+
     margin-bottom: 7px;
 }
 
 .bookmark-info {
     flex: 1;
+
     min-width: 0;
+
     cursor: pointer;
 }
 
 .bookmark-name {
     font-size: 12px;
+
     overflow: hidden;
+
     text-overflow: ellipsis;
+
     white-space: nowrap;
 }
 
 .bookmark-url {
     font-size: 10px;
+
     color: var(--muted);
+
     overflow: hidden;
+
     text-overflow: ellipsis;
+
     white-space: nowrap;
+
     margin-top: 3px;
 }
 
 .bookmark-delete {
     width: 27px;
     height: 27px;
+
     border-radius: 7px;
+
     background: transparent;
+
     color: var(--muted);
+
     cursor: pointer;
 }
 
 .bookmark-delete:hover {
     color: var(--danger);
-    background: rgba(255,80,80,.08);
+
+    background:
+        rgba(255,80,80,.08);
 }
 
-/* =========================
-   RESPONSIVE
-   ========================= */
 
-@media (max-width: 650px) {
+/* =========================
+   COOKIE CONSENT
+========================= */
+
+.cookie-overlay {
+    position: fixed;
+
+    inset: 0;
+
+    background:
+        rgba(0,0,0,.68);
+
+    backdrop-filter:
+        blur(5px);
+
+    z-index: 5000;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 20px;
+}
+
+.cookie-box {
+    width: min(430px,100%);
+
+    background: var(--panel);
+
+    border:
+        1px solid
+        var(--border);
+
+    border-radius: 16px;
+
+    padding: 25px;
+
+    box-shadow:
+        0 25px 80px
+        rgba(0,0,0,.55);
+}
+
+.cookie-logo {
+    width: 48px;
+    height: 48px;
+
+    border-radius: 14px;
+
+    background:
+        rgba(255,255,255,.055);
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    margin-bottom: 17px;
+}
+
+.cookie-logo svg {
+    width: 28px;
+    height: 28px;
+}
+
+.cookie-box h2 {
+    font-size: 19px;
+
+    margin-bottom: 9px;
+}
+
+.cookie-box p {
+    color: var(--muted);
+
+    font-size: 12px;
+
+    line-height: 1.65;
+}
+
+.cookie-buttons {
+    display: flex;
+
+    gap: 9px;
+
+    margin-top: 20px;
+}
+
+.cookie-buttons button {
+    flex: 1;
+
+    height: 40px;
+
+    border-radius: 9px;
+
+    cursor: pointer;
+
+    font-size: 12px;
+
+    font-weight: 600;
+}
+
+.cookie-yes {
+    background: var(--accent);
+
+    color: var(--accentText);
+}
+
+.cookie-no {
+    background: var(--panel2);
+
+    color: var(--text);
+}
+
+.cookie-no:hover {
+    background: #292929;
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width:650px) {
+
     .tab {
         min-width: 125px;
     }
@@ -742,7 +1408,9 @@ input:focus {
     .newtab-title {
         letter-spacing: -2px;
     }
+
 }
+
 </style>
 </head>
 
@@ -752,35 +1420,68 @@ input:focus {
 
     <header class="chrome">
 
-        <div class="tabs-row">
-            <div class="tabs" id="tabs"></div>
+        <!-- TABS -->
 
-            <button class="new-tab" id="newTabBtn" title="New tab">
+        <div class="tabs-row">
+
+            <div
+                class="tabs"
+                id="tabs"
+            ></div>
+
+            <!-- This is now directly beside the last tab -->
+
+            <button
+                class="new-tab"
+                id="newTabBtn"
+                title="New tab"
+            >
                 +
             </button>
+
         </div>
+
+
+        <!-- TOOLBAR -->
 
         <div class="toolbar">
 
             <div class="nav-buttons">
 
-                <button class="tool-btn" id="backBtn" title="Back">
+                <button
+                    class="tool-btn"
+                    id="backBtn"
+                    title="Back"
+                >
                     ←
                 </button>
 
-                <button class="tool-btn" id="forwardBtn" title="Forward">
+                <button
+                    class="tool-btn"
+                    id="forwardBtn"
+                    title="Forward"
+                >
                     →
                 </button>
 
-                <button class="tool-btn" id="refreshBtn" title="Refresh">
+                <button
+                    class="tool-btn"
+                    id="refreshBtn"
+                    title="Refresh"
+                >
                     ↻
                 </button>
 
             </div>
 
+
             <div class="address-wrap">
 
-                <span class="address-icon" id="addressIcon">⌕</span>
+                <span
+                    class="address-icon"
+                >
+                    ⌕
+                </span>
 
                 <input
                     id="address"
@@ -800,7 +1501,12 @@ input:focus {
 
             </div>
 
-            <button class="menu-btn" id="menuBtn" title="Menu">
+
+            <button
+                class="menu-btn"
+                id="menuBtn"
+                title="Menu"
+            >
                 ⋮
             </button>
 
@@ -808,42 +1514,64 @@ input:focus {
 
     </header>
 
-    <main class="viewport" id="viewport"></main>
+
+    <main
+        class="viewport"
+        id="viewport"
+    ></main>
 
 </div>
 
 
 <!-- =========================
      THREE DOT MENU
-     ========================= -->
+========================= -->
 
-<div class="menu" id="mainMenu">
+<div
+    class="menu"
+    id="mainMenu"
+>
 
-    <button class="menu-item" id="menuNewTab">
+    <button
+        class="menu-item"
+        id="menuNewTab"
+    >
         <span class="menu-icon">＋</span>
         New tab
     </button>
 
-    <button class="menu-item" id="menuBookmark">
+    <button
+        class="menu-item"
+        id="menuBookmark"
+    >
         <span class="menu-icon">☆</span>
         Bookmark this page
     </button>
 
     <div class="menu-separator"></div>
 
-    <button class="menu-item" id="menuBookmarks">
+    <button
+        class="menu-item"
+        id="menuBookmarks"
+    >
         <span class="menu-icon">★</span>
         Bookmarks
     </button>
 
-    <button class="menu-item" id="menuRename">
+    <button
+        class="menu-item"
+        id="menuRename"
+    >
         <span class="menu-icon">✎</span>
         Rename current tab
     </button>
 
     <div class="menu-separator"></div>
 
-    <button class="menu-item" id="menuSettings">
+    <button
+        class="menu-item"
+        id="menuSettings"
+    >
         <span class="menu-icon">⚙</span>
         Settings
     </button>
@@ -853,99 +1581,243 @@ input:focus {
 
 <!-- =========================
      PANEL BACKDROP
-     ========================= -->
+========================= -->
 
-<div class="backdrop" id="backdrop"></div>
+<div
+    class="backdrop"
+    id="backdrop"
+></div>
 
 
 <!-- =========================
-     SETTINGS
-     ========================= -->
+     SETTINGS PANEL
+========================= -->
 
-<aside class="panel" id="settingsPanel">
+<aside
+    class="panel"
+    id="settingsPanel"
+>
 
     <div class="panel-header">
+
         <h2>Settings</h2>
 
-        <button class="close-panel" data-close-panel>
+        <button
+            class="close-panel"
+            data-close-panel
+        >
             ×
         </button>
+
     </div>
 
+
     <div class="panel-body">
+
+
+        <!-- THEMES -->
 
         <section class="setting-section">
 
             <div class="setting-title">
-                Theme
+                Themes
             </div>
 
+
             <div class="preset-grid">
+
 
                 <button
                     class="preset"
                     data-theme="matte"
                 >
+
                     <div class="preset-name">
-                        Matte
+                        Matte Black
                     </div>
 
                     <div class="preset-preview">
-                        <span class="preset-dot" style="background:#101010"></span>
-                        <span class="preset-dot" style="background:#1b1b1b"></span>
-                        <span class="preset-dot" style="background:#ffffff"></span>
+
+                        <span
+                            class="preset-dot"
+                            style="background:#101010"
+                        ></span>
+
+                        <span
+                            class="preset-dot"
+                            style="background:#1b1b1b"
+                        ></span>
+
+                        <span
+                            class="preset-dot"
+                            style="background:#ffffff"
+                        ></span>
+
                     </div>
+
                 </button>
+
+
+                <button
+                    class="preset"
+                    data-theme="sakura"
+                >
+
+                    <div class="preset-name">
+                        Sakura
+                    </div>
+
+                    <div class="preset-preview">
+
+                        <span
+                            class="preset-dot"
+                            style="background:#190e14"
+                        ></span>
+
+                        <span
+                            class="preset-dot"
+                            style="background:#321725"
+                        ></span>
+
+                        <span
+                            class="preset-dot"
+                            style="background:#ff8fba"
+                        ></span>
+
+                    </div>
+
+                </button>
+
+
+                <button
+                    class="preset"
+                    data-theme="forest"
+                >
+
+                    <div class="preset-name">
+                        Forest
+                    </div>
+
+                    <div class="preset-preview">
+
+                        <span
+                            class="preset-dot"
+                            style="background:#0b140e"
+                        ></span>
+
+                        <span
+                            class="preset-dot"
+                            style="background:#17291b"
+                        ></span>
+
+                        <span
+                            class="preset-dot"
+                            style="background:#73c982"
+                        ></span>
+
+                    </div>
+
+                </button>
+
+
+                <button
+                    class="preset"
+                    data-theme="twilight"
+                >
+
+                    <div class="preset-name">
+                        Twilight
+                    </div>
+
+                    <div class="preset-preview">
+
+                        <span
+                            class="preset-dot"
+                            style="background:#110d1a"
+                        ></span>
+
+                        <span
+                            class="preset-dot"
+                            style="background:#241936"
+                        ></span>
+
+                        <span
+                            class="preset-dot"
+                            style="background:#b88cff"
+                        ></span>
+
+                    </div>
+
+                </button>
+
+
+                <button
+                    class="preset"
+                    data-theme="sunlight"
+                >
+
+                    <div class="preset-name">
+                        Sunlight
+                    </div>
+
+                    <div class="preset-preview">
+
+                        <span
+                            class="preset-dot"
+                            style="background:#191108"
+                        ></span>
+
+                        <span
+                            class="preset-dot"
+                            style="background:#32200c"
+                        ></span>
+
+                        <span
+                            class="preset-dot"
+                            style="background:#ffb84d"
+                        ></span>
+
+                    </div>
+
+                </button>
+
 
                 <button
                     class="preset"
                     data-theme="midnight"
                 >
+
                     <div class="preset-name">
                         Midnight
                     </div>
 
                     <div class="preset-preview">
-                        <span class="preset-dot" style="background:#080b12"></span>
-                        <span class="preset-dot" style="background:#121827"></span>
-                        <span class="preset-dot" style="background:#7aa2ff"></span>
-                    </div>
-                </button>
 
-                <button
-                    class="preset"
-                    data-theme="slate"
-                >
-                    <div class="preset-name">
-                        Slate
-                    </div>
+                        <span
+                            class="preset-dot"
+                            style="background:#080b12"
+                        ></span>
 
-                    <div class="preset-preview">
-                        <span class="preset-dot" style="background:#16191d"></span>
-                        <span class="preset-dot" style="background:#24282e"></span>
-                        <span class="preset-dot" style="background:#bfc8d6"></span>
-                    </div>
-                </button>
+                        <span
+                            class="preset-dot"
+                            style="background:#121827"
+                        ></span>
 
-                <button
-                    class="preset"
-                    data-theme="red"
-                >
-                    <div class="preset-name">
-                        Ember
+                        <span
+                            class="preset-dot"
+                            style="background:#7aa2ff"
+                        ></span>
+
                     </div>
 
-                    <div class="preset-preview">
-                        <span class="preset-dot" style="background:#110c0c"></span>
-                        <span class="preset-dot" style="background:#241414"></span>
-                        <span class="preset-dot" style="background:#ff6868"></span>
-                    </div>
                 </button>
 
             </div>
 
         </section>
 
+
+        <!-- CUSTOM COLORS -->
 
         <section class="setting-section">
 
@@ -953,38 +1825,85 @@ input:focus {
                 Custom colors
             </div>
 
-            <div class="input-row">
-                <span class="input-label">Background</span>
-                <input class="color-input" type="color" id="colorBg">
-            </div>
 
             <div class="input-row">
-                <span class="input-label">Panels</span>
-                <input class="color-input" type="color" id="colorPanel">
+
+                <span class="input-label">
+                    Background
+                </span>
+
+                <input
+                    class="color-input"
+                    type="color"
+                    id="colorBg"
+                >
+
             </div>
+
 
             <div class="input-row">
-                <span class="input-label">Accent</span>
-                <input class="color-input" type="color" id="colorAccent">
+
+                <span class="input-label">
+                    Panels
+                </span>
+
+                <input
+                    class="color-input"
+                    type="color"
+                    id="colorPanel"
+                >
+
             </div>
+
 
             <div class="input-row">
-                <span class="input-label">Text</span>
-                <input class="color-input" type="color" id="colorText">
+
+                <span class="input-label">
+                    Accent
+                </span>
+
+                <input
+                    class="color-input"
+                    type="color"
+                    id="colorAccent"
+                >
+
             </div>
 
-            <button class="primary-btn" id="applyColors">
+
+            <div class="input-row">
+
+                <span class="input-label">
+                    Text
+                </span>
+
+                <input
+                    class="color-input"
+                    type="color"
+                    id="colorText"
+                >
+
+            </div>
+
+
+            <button
+                class="primary-btn"
+                id="applyColors"
+            >
                 Apply custom colors
             </button>
 
         </section>
 
 
+        <!-- NEW TAB BACKGROUND -->
+
         <section class="setting-section">
 
             <div class="setting-title">
                 New tab background
             </div>
+
 
             <div class="input-row">
 
@@ -996,22 +1915,31 @@ input:focus {
 
             </div>
 
-            <button class="primary-btn" id="applyBackground">
+
+            <button
+                class="primary-btn"
+                id="applyBackground"
+            >
                 Apply background
             </button>
 
+
             <div class="small-note">
-                Leave the field empty to use the current theme background.
+                The background only appears on new-tab
+                pages. It does not cover normal pages.
             </div>
 
         </section>
 
+
+        <!-- CLOAK -->
 
         <section class="setting-section">
 
             <div class="setting-title">
                 Tab cloak
             </div>
+
 
             <div class="input-row">
 
@@ -1023,6 +1951,7 @@ input:focus {
 
             </div>
 
+
             <div class="input-row">
 
                 <input
@@ -1033,16 +1962,24 @@ input:focus {
 
             </div>
 
-            <button class="primary-btn" id="applyCloak">
+
+            <button
+                class="primary-btn"
+                id="applyCloak"
+            >
                 Apply tab cloak
             </button>
 
+
             <div class="small-note">
-                This changes the title and favicon displayed by the browser tab.
+                Changes the title and favicon shown
+                in the browser's own tab.
             </div>
 
         </section>
 
+
+        <!-- RESET -->
 
         <section class="setting-section">
 
@@ -1050,7 +1987,11 @@ input:focus {
                 Reset
             </div>
 
-            <button class="secondary-btn" id="resetSettings">
+
+            <button
+                class="secondary-btn"
+                id="resetSettings"
+            >
                 Reset appearance
             </button>
 
@@ -1062,289 +2003,588 @@ input:focus {
 
 
 <!-- =========================
-     BOOKMARKS PANEL
-     ========================= -->
+     BOOKMARK PANEL
+========================= -->
 
-<aside class="panel" id="bookmarksPanel">
+<aside
+    class="panel"
+    id="bookmarksPanel"
+>
 
     <div class="panel-header">
+
         <h2>Bookmarks</h2>
 
-        <button class="close-panel" data-close-panel>
+        <button
+            class="close-panel"
+            data-close-panel
+        >
             ×
         </button>
+
     </div>
 
-    <div class="panel-body" id="bookmarkList"></div>
+
+    <div
+        class="panel-body"
+        id="bookmarkList"
+    ></div>
 
 </aside>
 
 
 <script>
+
 "use strict";
 
+
 /*
-    VEIL ENGINE INTEGRATION
+=========================================================
+   VEIL ENGINE CONNECTION
+=========================================================
 
-    This frontend intentionally does not contain a browsing engine.
+The UI is independent from the browsing engine.
 
-    When you add your own engine, the main integration point is:
+Connect your engine here later.
 
-        VEIL_ENGINE.navigate(url, page)
-
-    and:
-
-        VEIL_ENGINE.reload(page)
-
-    The UI will already manage tabs, history, titles,
-    bookmarks, settings, etc.
+=========================================================
 */
 
 const VEIL_ENGINE = {
 
     navigate(url, page) {
+
         /*
-            Connect your engine here.
+            Your engine navigation goes here.
 
-            Example conceptual interface:
+            page is the current Veil tab object.
 
-            yourEngine.load(url, page.engineFrame);
+            Example:
 
+            yourEngine.load(
+                url,
+                page
+            );
         */
-        console.log("Veil navigation:", url);
+
     },
 
+
     reload(page) {
-        console.log("Veil reload:", page.url);
+
+        /*
+            Your engine reload function goes here.
+        */
+
     }
+
 };
 
 
-/* =========================
-   STORAGE
-   ========================= */
+/* ======================================================
+   COOKIE SYSTEM
+====================================================== */
+
+const COOKIE = {
+
+    consent: false,
+
+
+    set(name, value, days = 365) {
+
+        if (!this.consent) {
+            return;
+        }
+
+        const expires =
+            new Date(
+                Date.now() +
+                days * 86400000
+            ).toUTCString();
+
+        document.cookie =
+            encodeURIComponent(name) +
+            "=" +
+            encodeURIComponent(value) +
+            "; expires=" +
+            expires +
+            "; path=/; SameSite=Lax";
+    },
+
+
+    get(name) {
+
+        const target =
+            encodeURIComponent(name) +
+            "=";
+
+        const parts =
+            document.cookie.split("; ");
+
+        for (const part of parts) {
+
+            if (
+                part.startsWith(target)
+            ) {
+
+                return decodeURIComponent(
+                    part.slice(target.length)
+                );
+            }
+        }
+
+        return null;
+    },
+
+
+    remove(name) {
+
+        if (!this.consent) {
+            return;
+        }
+
+        document.cookie =
+            encodeURIComponent(name) +
+            "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax";
+    }
+
+};
+
+
+/* ======================================================
+   COOKIE STORAGE KEYS
+====================================================== */
 
 const STORAGE = {
-    tabs: "veil_tabs",
-    bookmarks: "veil_bookmarks",
-    settings: "veil_settings",
-    cloak: "veil_cloak"
+
+    bookmarks:
+        "veil_bookmarks",
+
+    settings:
+        "veil_settings",
+
+    cloak:
+        "veil_cloak"
+
 };
 
 
-/* =========================
+/* ======================================================
    DEFAULT SETTINGS
-   ========================= */
+====================================================== */
 
 const DEFAULT_SETTINGS = {
+
     theme: "matte",
+
     bg: "#101010",
+
+    bg2: "#151515",
+
+    bg3: "#1b1b1b",
+
     panel: "#181818",
-    accent: "#ffffff",
-    accentText: "#111111",
+
+    panel2: "#202020",
+
+    border: "#2b2b2b",
+
     text: "#f2f2f2",
+
+    muted: "#888888",
+
+    accent: "#ffffff",
+
+    accentText: "#111111",
+
     newtab: "#101010",
+
     backgroundUrl: ""
+
 };
 
+
+/* ======================================================
+   THEMES
+====================================================== */
 
 const THEMES = {
 
+
     matte: {
+
         bg: "#101010",
         bg2: "#151515",
         bg3: "#1b1b1b",
+
         panel: "#181818",
         panel2: "#202020",
+
         border: "#2b2b2b",
+
         text: "#f2f2f2",
-        muted: "#8d8d8d",
+        muted: "#888888",
+
         accent: "#ffffff",
         accentText: "#111111",
+
         newtab: "#101010"
+
     },
 
+
+    sakura: {
+
+        bg: "#190e14",
+        bg2: "#21111a",
+        bg3: "#321725",
+
+        panel: "#28131e",
+        panel2: "#3a1b29",
+
+        border: "#512538",
+
+        text: "#fff0f6",
+        muted: "#b991a3",
+
+        accent: "#ff8fba",
+        accentText: "#250b16",
+
+        newtab: "#190e14"
+
+    },
+
+
+    forest: {
+
+        bg: "#0b140e",
+        bg2: "#101b13",
+        bg3: "#17291b",
+
+        panel: "#132219",
+        panel2: "#1b3020",
+
+        border: "#29452f",
+
+        text: "#effff1",
+        muted: "#8da993",
+
+        accent: "#73c982",
+        accentText: "#071109",
+
+        newtab: "#0b140e"
+
+    },
+
+
+    twilight: {
+
+        bg: "#110d1a",
+        bg2: "#171122",
+        bg3: "#241936",
+
+        panel: "#1c142b",
+        panel2: "#2b1d40",
+
+        border: "#412c5c",
+
+        text: "#f7f0ff",
+        muted: "#a89ab8",
+
+        accent: "#b88cff",
+        accentText: "#160c24",
+
+        newtab: "#110d1a"
+
+    },
+
+
+    sunlight: {
+
+        bg: "#191108",
+        bg2: "#211609",
+        bg3: "#32200c",
+
+        panel: "#281a0a",
+        panel2: "#3a250e",
+
+        border: "#513716",
+
+        text: "#fff8eb",
+        muted: "#bca783",
+
+        accent: "#ffb84d",
+        accentText: "#241303",
+
+        newtab: "#191108"
+
+    },
+
+
     midnight: {
+
         bg: "#080b12",
         bg2: "#0d111b",
         bg3: "#121827",
+
         panel: "#101521",
         panel2: "#171e2d",
+
         border: "#263047",
+
         text: "#eef3ff",
         muted: "#8490a7",
+
         accent: "#7aa2ff",
         accentText: "#08101f",
+
         newtab: "#080b12"
-    },
 
-    slate: {
-        bg: "#16191d",
-        bg2: "#1c2025",
-        bg3: "#24282e",
-        panel: "#20242a",
-        panel2: "#2a2f36",
-        border: "#363c45",
-        text: "#edf0f5",
-        muted: "#929aa7",
-        accent: "#bfc8d6",
-        accentText: "#15181c",
-        newtab: "#16191d"
-    },
-
-    red: {
-        bg: "#110c0c",
-        bg2: "#170f0f",
-        bg3: "#241414",
-        panel: "#1d1111",
-        panel2: "#2b1717",
-        border: "#412323",
-        text: "#fff1f1",
-        muted: "#a88989",
-        accent: "#ff6868",
-        accentText: "#190808",
-        newtab: "#110c0c"
     }
+
 };
 
 
-/* =========================
+/* ======================================================
    STATE
-   ========================= */
+====================================================== */
 
 let tabs = [];
+
 let activeTabId = null;
+
 let bookmarks = [];
-let settings = {};
+
+let settings = {
+    ...DEFAULT_SETTINGS
+};
+
 let cloak = {
+
     title: "Veil",
+
     icon: ""
+
 };
 
 
-/* =========================
-   UTILITIES
-   ========================= */
+/* ======================================================
+   TEMPORARY TAB STATE
+
+   Tabs are intentionally held in memory.
+
+   This means that selecting "No" for cookies means
+   nothing is persisted between visits.
+====================================================== */
+
+
+/* ======================================================
+   ID
+====================================================== */
 
 function uid() {
-    return Date.now().toString(36) +
-        Math.random().toString(36).slice(2, 8);
+
+    return (
+        Date.now().toString(36) +
+        Math.random()
+            .toString(36)
+            .slice(2,8)
+    );
+
 }
 
 
+/* ======================================================
+   SAVE
+====================================================== */
+
 function save() {
 
-    localStorage.setItem(
-        STORAGE.tabs,
-        JSON.stringify(tabs)
-    );
+    if (!COOKIE.consent) {
+        return;
+    }
 
-    localStorage.setItem(
+
+    COOKIE.set(
         STORAGE.bookmarks,
         JSON.stringify(bookmarks)
     );
 
-    localStorage.setItem(
+
+    COOKIE.set(
         STORAGE.settings,
         JSON.stringify(settings)
     );
 
-    localStorage.setItem(
+
+    COOKIE.set(
         STORAGE.cloak,
         JSON.stringify(cloak)
     );
+
 }
 
 
-function load() {
+/* ======================================================
+   LOAD COOKIES
+====================================================== */
 
-    try {
-        tabs =
-            JSON.parse(
-                localStorage.getItem(STORAGE.tabs)
-            ) || [];
-    } catch {
-        tabs = [];
+function loadSavedData() {
+
+    if (!COOKIE.consent) {
+        return;
     }
 
+
     try {
-        bookmarks =
-            JSON.parse(
-                localStorage.getItem(STORAGE.bookmarks)
-            ) || [];
+
+        const savedBookmarks =
+            COOKIE.get(
+                STORAGE.bookmarks
+            );
+
+        if (savedBookmarks) {
+
+            bookmarks =
+                JSON.parse(
+                    savedBookmarks
+                );
+
+        }
+
     } catch {
+
         bookmarks = [];
+
     }
 
+
     try {
-        settings =
-            JSON.parse(
-                localStorage.getItem(STORAGE.settings)
-            ) || {};
+
+        const savedSettings =
+            COOKIE.get(
+                STORAGE.settings
+            );
+
+        if (savedSettings) {
+
+            settings = {
+
+                ...DEFAULT_SETTINGS,
+
+                ...JSON.parse(
+                    savedSettings
+                )
+
+            };
+
+        }
+
     } catch {
-        settings = {};
+
+        settings = {
+            ...DEFAULT_SETTINGS
+        };
+
     }
 
-    settings = {
-        ...DEFAULT_SETTINGS,
-        ...settings
-    };
 
     try {
-        cloak =
-            JSON.parse(
-                localStorage.getItem(STORAGE.cloak)
-            ) || cloak;
-    } catch {}
 
-    if (!tabs.length) {
-        createTab(false);
+        const savedCloak =
+            COOKIE.get(
+                STORAGE.cloak
+            );
+
+        if (savedCloak) {
+
+            cloak =
+                JSON.parse(
+                    savedCloak
+                );
+
+        }
+
+    } catch {
+
+        cloak = {
+            title: "Veil",
+            icon: ""
+        };
+
     }
 
-    if (!activeTabId || !tabs.some(t => t.id === activeTabId)) {
-        activeTabId = tabs[0].id;
-    }
 }
 
 
-/* =========================
-   TAB CREATION
-   ========================= */
+/* ======================================================
+   CREATE TAB
+====================================================== */
 
 function createTab(select = true) {
 
     const page = {
+
         id: uid(),
+
         title: "New Tab",
+
         url: "",
+
         history: [],
+
         historyIndex: -1,
+
         newTab: true
+
     };
+
 
     tabs.push(page);
 
+
     if (select) {
-        activeTabId = page.id;
+
+        activeTabId =
+            page.id;
+
     }
 
-    save();
+
     render();
+
 }
 
 
+/* ======================================================
+   CLOSE TAB
+====================================================== */
+
 function closeTab(id) {
 
-    const index = tabs.findIndex(t => t.id === id);
+    const index =
+        tabs.findIndex(
+            tab =>
+                tab.id === id
+        );
 
-    if (index === -1) return;
 
-    tabs.splice(index, 1);
-
-    if (!tabs.length) {
-        createTab(true);
+    if (index === -1) {
         return;
     }
+
+
+    tabs.splice(index,1);
+
+
+    if (!tabs.length) {
+
+        createTab(true);
+
+        return;
+
+    }
+
 
     if (activeTabId === id) {
 
@@ -1353,99 +2593,155 @@ function closeTab(id) {
             tabs[index - 1] ||
             tabs[0];
 
-        activeTabId = next.id;
+        activeTabId =
+            next.id;
+
     }
 
-    save();
+
     render();
+
 }
 
+
+/* ======================================================
+   ACTIVE TAB
+====================================================== */
 
 function getActiveTab() {
-    return tabs.find(t => t.id === activeTabId);
+
+    return tabs.find(
+        tab =>
+            tab.id === activeTabId
+    );
+
 }
 
 
-/* =========================
+/* ======================================================
    NAVIGATION
-   ========================= */
+====================================================== */
 
 function navigate(input) {
 
-    const page = getActiveTab();
+    const page =
+        getActiveTab();
 
-    if (!page) return;
 
-    let value = input.trim();
+    if (!page) {
+        return;
+    }
 
-    if (!value) return;
 
-    /*
-        Basic address handling.
+    let value =
+        input.trim();
 
-        This only prepares the URL for your engine.
-    */
+
+    if (!value) {
+        return;
+    }
+
 
     if (
-        !/^https?:\/\//i.test(value)
+        !/^https?:\/\//i.test(
+            value
+        )
     ) {
 
         if (
             value.includes(".") &&
             !value.includes(" ")
         ) {
-            value = "https://" + value;
+
+            value =
+                "https://" +
+                value;
+
         } else {
+
             value =
                 "https://www.google.com/search?q=" +
-                encodeURIComponent(value);
+                encodeURIComponent(
+                    value
+                );
+
         }
+
     }
 
+
     page.newTab = false;
+
     page.url = value;
+
 
     if (
         page.historyIndex <
         page.history.length - 1
     ) {
+
         page.history =
             page.history.slice(
                 0,
                 page.historyIndex + 1
             );
+
     }
 
-    page.history.push(value);
+
+    page.history.push(
+        value
+    );
+
+
     page.historyIndex =
         page.history.length - 1;
 
-    if (
-        !page.title ||
-        page.title === "New Tab"
-    ) {
-        try {
-            page.title =
-                new URL(value).hostname;
-        } catch {
-            page.title = "Veil";
-        }
+
+    try {
+
+        page.title =
+            new URL(
+                value
+            ).hostname;
+
+    } catch {
+
+        page.title =
+            "Veil";
+
     }
 
-    save();
+
     render();
 
-    VEIL_ENGINE.navigate(value, page);
+
+    VEIL_ENGINE.navigate(
+        value,
+        page
+    );
+
 }
 
 
+/* ======================================================
+   BACK
+====================================================== */
+
 function goBack() {
 
-    const page = getActiveTab();
+    const page =
+        getActiveTab();
 
-    if (!page) return;
 
-    if (page.historyIndex > 0) {
+    if (!page) {
+        return;
+    }
+
+
+    if (
+        page.historyIndex > 0
+    ) {
 
         page.historyIndex--;
 
@@ -1456,22 +2752,34 @@ function goBack() {
 
         page.newTab = false;
 
-        save();
+
         render();
+
 
         VEIL_ENGINE.navigate(
             page.url,
             page
         );
+
     }
+
 }
 
 
+/* ======================================================
+   FORWARD
+====================================================== */
+
 function goForward() {
 
-    const page = getActiveTab();
+    const page =
+        getActiveTab();
 
-    if (!page) return;
+
+    if (!page) {
+        return;
+    }
+
 
     if (
         page.historyIndex <
@@ -1487,44 +2795,65 @@ function goForward() {
 
         page.newTab = false;
 
-        save();
+
         render();
+
 
         VEIL_ENGINE.navigate(
             page.url,
             page
         );
+
     }
+
 }
 
+
+/* ======================================================
+   RELOAD
+====================================================== */
 
 function reload() {
 
-    const page = getActiveTab();
+    const page =
+        getActiveTab();
 
-    if (!page) return;
 
-    if (page.url) {
-        VEIL_ENGINE.reload(page);
+    if (
+        page &&
+        page.url
+    ) {
+
+        VEIL_ENGINE.reload(
+            page
+        );
+
     }
+
 }
 
 
-/* =========================
-   TAB NAMING
-   ========================= */
+/* ======================================================
+   RENAME
+====================================================== */
 
 function renameCurrentTab() {
 
-    const page = getActiveTab();
+    const page =
+        getActiveTab();
 
-    if (!page) return;
+
+    if (!page) {
+        return;
+    }
+
 
     const name =
         prompt(
             "Enter a name for this tab:",
             page.title
         );
+
 
     if (
         name !== null &&
@@ -1534,240 +2863,243 @@ function renameCurrentTab() {
         page.title =
             name.trim();
 
-        save();
         render();
+
     }
+
 }
 
 
-/* =========================
+/* ======================================================
    BOOKMARKS
-   ========================= */
+====================================================== */
 
 function toggleBookmark() {
 
-    const page = getActiveTab();
+    const page =
+        getActiveTab();
 
-    if (!page || !page.url) return;
+
+    if (
+        !page ||
+        !page.url
+    ) {
+
+        return;
+
+    }
+
 
     const existing =
         bookmarks.find(
-            b => b.url === page.url
+            bookmark =>
+                bookmark.url ===
+                page.url
         );
+
 
     if (existing) {
 
         bookmarks =
             bookmarks.filter(
-                b => b.url !== page.url
+                bookmark =>
+                    bookmark.url !==
+                    page.url
             );
 
     } else {
 
         bookmarks.push({
+
             id: uid(),
-            title: page.title || page.url,
-            url: page.url
+
+            title:
+                page.title ||
+                page.url,
+
+            url:
+                page.url
+
         });
+
     }
 
+
     save();
+
     render();
+
     renderBookmarks();
+
 }
 
+
+/* ======================================================
+   BOOKMARK CHECK
+====================================================== */
 
 function isBookmarked(url) {
 
     return bookmarks.some(
-        b => b.url === url
+        bookmark =>
+            bookmark.url === url
     );
+
 }
 
 
-function renderBookmarks() {
-
-    const list =
-        document.getElementById(
-            "bookmarkList"
-        );
-
-    if (!bookmarks.length) {
-
-        list.innerHTML = `
-            <div class="bookmarks-empty">
-                No bookmarks yet.
-            </div>
-        `;
-
-        return;
-    }
-
-    list.innerHTML = bookmarks.map(b => `
-
-        <div class="bookmark-row">
-
-            <div
-                class="bookmark-info"
-                data-open-bookmark="${escapeHTML(b.url)}"
-            >
-                <div class="bookmark-name">
-                    ${escapeHTML(b.title)}
-                </div>
-
-                <div class="bookmark-url">
-                    ${escapeHTML(b.url)}
-                </div>
-            </div>
-
-            <button
-                class="bookmark-delete"
-                data-delete-bookmark="${b.id}"
-            >
-                ×
-            </button>
-
-        </div>
-
-    `).join("");
-
-    list
-        .querySelectorAll("[data-open-bookmark]")
-        .forEach(el => {
-
-            el.addEventListener(
-                "click",
-                () => {
-
-                    navigate(
-                        el.dataset.openBookmark
-                    );
-
-                    closePanels();
-                }
-            );
-        });
-
-    list
-        .querySelectorAll("[data-delete-bookmark]")
-        .forEach(el => {
-
-            el.addEventListener(
-                "click",
-                () => {
-
-                    bookmarks =
-                        bookmarks.filter(
-                            b =>
-                                b.id !==
-                                el.dataset.deleteBookmark
-                        );
-
-                    save();
-                    renderBookmarks();
-                    render();
-                }
-            );
-        });
-}
-
-
-/* =========================
-   ESCAPE HTML
-   ========================= */
+/* ======================================================
+   ESCAPE
+====================================================== */
 
 function escapeHTML(value) {
 
     return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+
+        .replace(
+            /</g,
+            "&lt;"
+        )
+
+        .replace(
+            />/g,
+            "&gt;"
+        )
+
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
 }
 
 
-/* =========================
+/* ======================================================
    RENDER TABS
-   ========================= */
+====================================================== */
 
 function renderTabs() {
 
     const container =
-        document.getElementById("tabs");
+        document.getElementById(
+            "tabs"
+        );
+
 
     container.innerHTML =
-        tabs.map(tab => `
+        tabs.map(
+            tab => `
 
-        <div
-            class="tab ${tab.id === activeTabId ? "active" : ""}"
-            data-tab-id="${tab.id}"
-        >
-
-            <div class="tab-icon">
-                <span>◉</span>
-            </div>
-
-            <div class="tab-title">
-                ${escapeHTML(tab.title)}
-            </div>
-
-            <button
-                class="tab-close"
-                data-close-tab="${tab.id}"
+            <div
+                class="tab ${
+                    tab.id === activeTabId
+                        ? "active"
+                        : ""
+                }"
+                data-tab-id="${tab.id}"
             >
-                ×
-            </button>
 
-        </div>
+                <div class="tab-icon">
 
-    `).join("");
+                    <span class="default-tab-icon"></span>
 
-    container
-        .querySelectorAll("[data-tab-id]")
-        .forEach(tabEl => {
+                </div>
 
-            tabEl.addEventListener(
-                "click",
-                e => {
+                <div class="tab-title">
 
-                    if (
-                        e.target.closest(
-                            "[data-close-tab]"
-                        )
-                    ) return;
+                    ${escapeHTML(
+                        tab.title
+                    )}
 
-                    activeTabId =
-                        tabEl.dataset.tabId;
+                </div>
 
-                    save();
-                    render();
-                }
-            );
-        });
+                <button
+                    class="tab-close"
+                    data-close-tab="${tab.id}"
+                >
+                    ×
+                </button>
+
+            </div>
+
+        `
+        ).join("");
+
 
     container
-        .querySelectorAll("[data-close-tab]")
-        .forEach(button => {
+        .querySelectorAll(
+            "[data-tab-id]"
+        )
+        .forEach(
+            tabElement => {
 
-            button.addEventListener(
-                "click",
-                e => {
+                tabElement.addEventListener(
+                    "click",
+                    event => {
 
-                    e.stopPropagation();
+                        if (
+                            event.target.closest(
+                                "[data-close-tab]"
+                            )
+                        ) {
 
-                    closeTab(
-                        button.dataset.closeTab
-                    );
-                }
-            );
-        });
+                            return;
+
+                        }
+
+
+                        activeTabId =
+                            tabElement.dataset.tabId;
+
+
+                        render();
+
+                    }
+                );
+
+            }
+        );
+
+
+    container
+        .querySelectorAll(
+            "[data-close-tab]"
+        )
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    event => {
+
+                        event.stopPropagation();
+
+                        closeTab(
+                            button.dataset.closeTab
+                        );
+
+                    }
+                );
+
+            }
+        );
+
 }
 
 
-/* =========================
-   RENDER CONTENT
-   ========================= */
+/* ======================================================
+   RENDER VIEWPORT
+====================================================== */
 
 function renderViewport() {
 
@@ -1776,95 +3108,114 @@ function renderViewport() {
             "viewport"
         );
 
+
     viewport.innerHTML = "";
 
-    tabs.forEach(page => {
 
-        const wrapper =
-            document.createElement("div");
+    tabs.forEach(
+        page => {
 
-        wrapper.className =
-            "page" +
-            (
-                page.id === activeTabId
-                    ? " active"
-                    : ""
-            );
+            const wrapper =
+                document.createElement(
+                    "div"
+                );
 
-        if (page.newTab || !page.url) {
 
-            wrapper.innerHTML = `
+            wrapper.className =
+                "page" +
+                (
+                    page.id === activeTabId
+                        ? " active"
+                        : ""
+                );
 
-                <div
-                    class="newtab-page"
-                    id="newtab-${page.id}"
-                >
 
-                    <div class="newtab-overlay">
+            if (
+                page.newTab ||
+                !page.url
+            ) {
 
-                        <div class="newtab-center">
+                wrapper.innerHTML = `
 
-                            <div class="veil-mark">
+                    <div
+                        class="newtab-page"
+                        id="newtab-${page.id}"
+                    >
 
-                                <svg
-                                    viewBox="0 0 100 100"
-                                    fill="none"
-                                >
+                        <div class="newtab-overlay">
 
-                                    <path
-                                        d="M50 12L82 26V47C82 69 68 85 50 91C32 85 18 69 18 47V26L50 12Z"
-                                        stroke="currentColor"
-                                        stroke-width="6"
-                                    />
+                            <div class="newtab-center">
 
-                                    <path
-                                        d="M37 50L46 59L65 39"
-                                        stroke="currentColor"
-                                        stroke-width="6"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                    />
+                                <div class="veil-mark">
 
-                                </svg>
+                                    <svg
+                                        viewBox="0 0 100 100"
+                                        fill="none"
+                                    >
 
-                            </div>
+                                        <path
+                                            d="M50 12L82 26V47C82 69 68 85 50 91C32 85 18 69 18 47V26L50 12Z"
+                                            stroke="currentColor"
+                                            stroke-width="6"
+                                        />
 
-                            <h1 class="newtab-title">
-                                Veil
-                            </h1>
+                                        <path
+                                            d="M37 50L46 59L65 39"
+                                            stroke="currentColor"
+                                            stroke-width="6"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                        />
 
-                            <p class="newtab-subtitle">
-                                A quieter way to browse.
-                            </p>
+                                    </svg>
 
-                            <div class="search-box">
+                                </div>
 
-                                <span>⌕</span>
 
-                                <input
-                                    class="newtab-search"
-                                    data-page="${page.id}"
-                                    placeholder="Search or enter address"
-                                    autocomplete="off"
-                                >
+                                <h1 class="newtab-title">
+                                    Veil
+                                </h1>
 
-                            </div>
 
-                            <div class="quick-links">
+                                <p class="newtab-subtitle">
+                                    A quieter way to browse.
+                                </p>
 
-                                <button
-                                    class="quick-link"
-                                    data-action="bookmarks"
-                                >
-                                    Bookmarks
-                                </button>
 
-                                <button
-                                    class="quick-link"
-                                    data-action="settings"
-                                >
-                                    Settings
-                                </button>
+                                <div class="search-box">
+
+                                    <span>
+                                        ⌕
+                                    </span>
+
+                                    <input
+                                        class="newtab-search"
+                                        data-page="${page.id}"
+                                        placeholder="Search or enter address"
+                                        autocomplete="off"
+                                    >
+
+                                </div>
+
+
+                                <div class="quick-links">
+
+                                    <button
+                                        class="quick-link"
+                                        data-action="bookmarks"
+                                    >
+                                        Bookmarks
+                                    </button>
+
+
+                                    <button
+                                        class="quick-link"
+                                        data-action="settings"
+                                    >
+                                        Settings
+                                    </button>
+
+                                </div>
 
                             </div>
 
@@ -1872,115 +3223,149 @@ function renderViewport() {
 
                     </div>
 
-                </div>
+                `;
 
-            `;
+            } else {
 
-        } else {
+                const frame =
+                    document.createElement(
+                        "iframe"
+                    );
 
-            /*
-                Your engine can replace this frame.
 
-                Keeping the element here gives the engine
-                a predictable DOM target.
-            */
+                frame.className =
+                    "engine-frame";
 
-            const frame =
-                document.createElement("iframe");
 
-            frame.className =
-                "engine-frame";
+                frame.setAttribute(
+                    "data-veil-engine-frame",
+                    page.id
+                );
 
-            frame.setAttribute(
-                "data-veil-engine-frame",
-                page.id
+
+                frame.src =
+                    "about:blank";
+
+
+                wrapper.appendChild(
+                    frame
+                );
+
+            }
+
+
+            viewport.appendChild(
+                wrapper
             );
 
-            frame.src =
-                "about:blank";
-
-            wrapper.appendChild(frame);
         }
-
-        viewport.appendChild(wrapper);
-    });
+    );
 
 
     document
-        .querySelectorAll(".newtab-search")
-        .forEach(input => {
+        .querySelectorAll(
+            ".newtab-search"
+        )
+        .forEach(
+            input => {
 
-            input.addEventListener(
-                "keydown",
-                e => {
+                input.addEventListener(
+                    "keydown",
+                    event => {
 
-                    if (e.key === "Enter") {
+                        if (
+                            event.key ===
+                            "Enter"
+                        ) {
 
-                        activeTabId =
-                            input.dataset.page;
+                            activeTabId =
+                                input.dataset.page;
 
-                        navigate(
-                            input.value
-                        );
+
+                            navigate(
+                                input.value
+                            );
+
+                        }
+
                     }
-                }
-            );
-        });
+                );
+
+            }
+        );
 
 
     document
         .querySelectorAll(
             '[data-action="bookmarks"]'
         )
-        .forEach(button => {
+        .forEach(
+            button => {
 
-            button.addEventListener(
-                "click",
-                () => openPanel("bookmarksPanel")
-            );
-        });
+                button.addEventListener(
+                    "click",
+                    () =>
+                        openPanel(
+                            "bookmarksPanel"
+                        )
+                );
+
+            }
+        );
 
 
     document
         .querySelectorAll(
             '[data-action="settings"]'
         )
-        .forEach(button => {
+        .forEach(
+            button => {
 
-            button.addEventListener(
-                "click",
-                () => openPanel("settingsPanel")
-            );
-        });
+                button.addEventListener(
+                    "click",
+                    () =>
+                        openPanel(
+                            "settingsPanel"
+                        )
+                );
+
+            }
+        );
 
 
     applyNewTabBackground();
+
 }
 
 
-/* =========================
+/* ======================================================
    TOOLBAR
-   ========================= */
+====================================================== */
 
 function renderToolbar() {
 
-    const page = getActiveTab();
+    const page =
+        getActiveTab();
+
 
     const address =
         document.getElementById(
             "address"
         );
 
+
     address.value =
         page && page.url
             ? page.url
             : "";
+
 
     document.getElementById(
         "backBtn"
     ).disabled =
         !page ||
         page.historyIndex <= 0;
+
 
     document.getElementById(
         "forwardBtn"
@@ -1989,69 +3374,102 @@ function renderToolbar() {
         page.historyIndex >=
         page.history.length - 1;
 
-    const bookmarkBtn =
+
+    const bookmarkButton =
         document.getElementById(
             "bookmarkBtn"
         );
 
+
     if (
         page &&
         page.url &&
-        isBookmarked(page.url)
+        isBookmarked(
+            page.url
+        )
     ) {
 
-        bookmarkBtn.classList.add("saved");
-        bookmarkBtn.textContent = "★";
+        bookmarkButton.classList.add(
+            "saved"
+        );
+
+        bookmarkButton.textContent =
+            "★";
 
     } else {
 
-        bookmarkBtn.classList.remove("saved");
-        bookmarkBtn.textContent = "☆";
+        bookmarkButton.classList.remove(
+            "saved"
+        );
+
+        bookmarkButton.textContent =
+            "☆";
+
     }
+
 }
 
 
-/* =========================
-   COMPLETE RENDER
-   ========================= */
+/* ======================================================
+   RENDER
+====================================================== */
 
 function render() {
 
     renderTabs();
+
     renderViewport();
+
     renderToolbar();
+
 }
 
 
-/* =========================
-   THEME
-   ========================= */
+/* ======================================================
+   APPLY THEME
+====================================================== */
 
 function applyTheme(themeName) {
 
     const theme =
         THEMES[themeName];
 
-    if (!theme) return;
+
+    if (!theme) {
+        return;
+    }
+
 
     settings = {
+
         ...settings,
+
         ...theme,
+
         theme: themeName
+
     };
+
 
     applyCSSVariables();
 
     save();
+
 }
 
+
+/* ======================================================
+   CSS VARIABLES
+====================================================== */
 
 function applyCSSVariables() {
 
     const root =
         document.documentElement;
 
+
     const keys = [
+
         "bg",
         "bg2",
         "bg3",
@@ -2063,20 +3481,69 @@ function applyCSSVariables() {
         "accent",
         "accentText",
         "newtab"
+
     ];
 
-    keys.forEach(key => {
 
-        if (settings[key]) {
+    keys.forEach(
+        key => {
 
-            root.style.setProperty(
-                "--" + key,
+            if (
                 settings[key]
-            );
+            ) {
+
+                root.style.setProperty(
+                    "--" + key,
+                    settings[key]
+                );
+
+            }
+
         }
-    });
+    );
+
 }
 
+
+/* ======================================================
+   COLOR INPUTS
+====================================================== */
+
+function loadColorInputs() {
+
+    document.getElementById(
+        "colorBg"
+    ).value =
+        settings.bg ||
+        "#101010";
+
+
+    document.getElementById(
+        "colorPanel"
+    ).value =
+        settings.panel ||
+        "#181818";
+
+
+    document.getElementById(
+        "colorAccent"
+    ).value =
+        settings.accent ||
+        "#ffffff";
+
+
+    document.getElementById(
+        "colorText"
+    ).value =
+        settings.text ||
+        "#f2f2f2";
+
+}
+
+
+/* ======================================================
+   CUSTOM COLORS
+====================================================== */
 
 function applyCustomColors() {
 
@@ -2085,78 +3552,71 @@ function applyCustomColors() {
             "colorBg"
         ).value;
 
+
     settings.panel =
         document.getElementById(
             "colorPanel"
         ).value;
+
 
     settings.accent =
         document.getElementById(
             "colorAccent"
         ).value;
 
+
     settings.text =
         document.getElementById(
             "colorText"
         ).value;
 
-    settings.theme = "custom";
+
+    settings.theme =
+        "custom";
+
 
     applyCSSVariables();
+
     save();
+
 }
 
 
-function loadColorInputs() {
-
-    document.getElementById(
-        "colorBg"
-    ).value =
-        settings.bg || "#101010";
-
-    document.getElementById(
-        "colorPanel"
-    ).value =
-        settings.panel || "#181818";
-
-    document.getElementById(
-        "colorAccent"
-    ).value =
-        settings.accent || "#ffffff";
-
-    document.getElementById(
-        "colorText"
-    ).value =
-        settings.text || "#f2f2f2";
-}
-
-
-/* =========================
-   NEW TAB BACKGROUND
-   ========================= */
+/* ======================================================
+   BACKGROUND
+====================================================== */
 
 function applyNewTabBackground() {
 
     document
-        .querySelectorAll(".newtab-page")
-        .forEach(page => {
+        .querySelectorAll(
+            ".newtab-page"
+        )
+        .forEach(
+            page => {
 
-            if (settings.backgroundUrl) {
+                if (
+                    settings.backgroundUrl
+                ) {
 
-                page.style.backgroundImage =
-                    `url("${settings.backgroundUrl}")`;
+                    page.style.backgroundImage =
+                        `url("${settings.backgroundUrl}")`;
 
-            } else {
+                } else {
 
-                page.style.backgroundImage =
-                    "none";
+                    page.style.backgroundImage =
+                        "none";
 
-                page.style.backgroundColor =
-                    settings.newtab ||
-                    settings.bg ||
-                    "#101010";
+                    page.style.backgroundColor =
+                        settings.newtab ||
+                        settings.bg ||
+                        "#101010";
+
+                }
+
             }
-        });
+        );
+
 }
 
 
@@ -2167,15 +3627,17 @@ function applyBackground() {
             "backgroundUrl"
         ).value.trim();
 
+
     save();
 
     applyNewTabBackground();
+
 }
 
 
-/* =========================
-   TAB CLOAK
-   ========================= */
+/* ======================================================
+   CLOAK
+====================================================== */
 
 function applyCloak() {
 
@@ -2184,117 +3646,295 @@ function applyCloak() {
             "cloakTitle"
         ).value.trim();
 
+
     const icon =
         document.getElementById(
             "cloakIcon"
         ).value.trim();
 
-    cloak.title =
-        title || "Veil";
 
-    cloak.icon = icon;
+    cloak.title =
+        title ||
+        "Veil";
+
+
+    cloak.icon =
+        icon;
+
 
     document.title =
         cloak.title;
+
 
     const favicon =
         document.getElementById(
             "favicon"
         );
 
+
     if (icon) {
 
-        favicon.href = icon;
+        favicon.href =
+            icon;
 
     } else {
 
         favicon.href =
-            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23101010'/%3E%3Cpath d='M50 17L78 29V48C78 67 66 80 50 86C34 80 22 67 22 48V29L50 17Z' fill='none' stroke='%23fff' stroke-width='7'/%3E%3C/svg%3E";
+            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23101010'/%3E%3Cpath d='M50 15L80 28V48C80 69 67 84 50 90C33 84 20 69 20 48V28L50 15Z' fill='none' stroke='%23fff' stroke-width='7'/%3E%3C/svg%3E";
+
     }
 
+
     save();
+
 }
 
 
-/* =========================
+/* ======================================================
    PANELS
-   ========================= */
+====================================================== */
 
 function openPanel(id) {
 
     closeMenu();
 
-    document
-        .getElementById("backdrop")
-        .classList.add("open");
 
     document
-        .getElementById(id)
-        .classList.add("open");
+        .getElementById(
+            "backdrop"
+        )
+        .classList.add(
+            "open"
+        );
 
-    if (id === "bookmarksPanel") {
+
+    document
+        .getElementById(
+            id
+        )
+        .classList.add(
+            "open"
+        );
+
+
+    if (
+        id ===
+        "bookmarksPanel"
+    ) {
+
         renderBookmarks();
+
     }
 
-    if (id === "settingsPanel") {
+
+    if (
+        id ===
+        "settingsPanel"
+    ) {
 
         loadColorInputs();
+
 
         document.getElementById(
             "backgroundUrl"
         ).value =
-            settings.backgroundUrl || "";
+            settings.backgroundUrl ||
+            "";
+
 
         document.getElementById(
             "cloakTitle"
         ).value =
-            cloak.title || "Veil";
+            cloak.title ||
+            "Veil";
+
 
         document.getElementById(
             "cloakIcon"
         ).value =
-            cloak.icon || "";
+            cloak.icon ||
+            "";
+
     }
+
 }
 
 
 function closePanels() {
 
     document
-        .querySelectorAll(".panel")
-        .forEach(panel =>
-            panel.classList.remove("open")
+        .querySelectorAll(
+            ".panel"
+        )
+        .forEach(
+            panel =>
+                panel.classList.remove(
+                    "open"
+                )
         );
 
+
     document
-        .getElementById("backdrop")
-        .classList.remove("open");
+        .getElementById(
+            "backdrop"
+        )
+        .classList.remove(
+            "open"
+        );
+
 }
 
 
-/* =========================
+/* ======================================================
    MENU
-   ========================= */
-
-function openMenu() {
-
-    document
-        .getElementById("mainMenu")
-        .classList.add("open");
-}
-
+====================================================== */
 
 function closeMenu() {
 
     document
-        .getElementById("mainMenu")
-        .classList.remove("open");
+        .getElementById(
+            "mainMenu"
+        )
+        .classList.remove(
+            "open"
+        );
+
 }
 
 
-/* =========================
+/* ======================================================
+   BOOKMARK LIST
+====================================================== */
+
+function renderBookmarks() {
+
+    const list =
+        document.getElementById(
+            "bookmarkList"
+        );
+
+
+    if (!bookmarks.length) {
+
+        list.innerHTML = `
+
+            <div class="bookmarks-empty">
+                No bookmarks yet.
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    list.innerHTML =
+        bookmarks
+            .map(
+                bookmark => `
+
+                <div class="bookmark-row">
+
+                    <div
+                        class="bookmark-info"
+                        data-open-bookmark="${escapeHTML(
+                            bookmark.url
+                        )}"
+                    >
+
+                        <div class="bookmark-name">
+                            ${escapeHTML(
+                                bookmark.title
+                            )}
+                        </div>
+
+                        <div class="bookmark-url">
+                            ${escapeHTML(
+                                bookmark.url
+                            )}
+                        </div>
+
+                    </div>
+
+
+                    <button
+                        class="bookmark-delete"
+                        data-delete-bookmark="${bookmark.id}"
+                    >
+                        ×
+                    </button>
+
+                </div>
+
+            `
+            )
+            .join("");
+
+
+    list
+        .querySelectorAll(
+            "[data-open-bookmark]"
+        )
+        .forEach(
+            element => {
+
+                element.addEventListener(
+                    "click",
+                    () => {
+
+                        navigate(
+                            element.dataset
+                                .openBookmark
+                        );
+
+                        closePanels();
+
+                    }
+                );
+
+            }
+        );
+
+
+    list
+        .querySelectorAll(
+            "[data-delete-bookmark]"
+        )
+        .forEach(
+            element => {
+
+                element.addEventListener(
+                    "click",
+                    () => {
+
+                        bookmarks =
+                            bookmarks.filter(
+                                bookmark =>
+                                    bookmark.id !==
+                                    element.dataset
+                                        .deleteBookmark
+                            );
+
+
+                        save();
+
+                        renderBookmarks();
+
+                        render();
+
+                    }
+                );
+
+            }
+        );
+
+}
+
+
+/* ======================================================
    RESET
-   ========================= */
+====================================================== */
 
 function resetSettings() {
 
@@ -2302,42 +3942,61 @@ function resetSettings() {
         ...DEFAULT_SETTINGS
     };
 
+
     cloak = {
+
         title: "Veil",
+
         icon: ""
+
     };
 
-    document.title = "Veil";
 
-    applyTheme("matte");
+    document.title =
+        "Veil";
+
+
+    applyTheme(
+        "matte"
+    );
+
 
     const favicon =
         document.getElementById(
             "favicon"
         );
 
+
     favicon.href =
-        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23101010'/%3E%3Cpath d='M50 17L78 29V48C78 67 66 80 50 86C34 80 22 67 22 48V29L50 17Z' fill='none' stroke='%23fff' stroke-width='7'/%3E%3C/svg%3E";
+        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23101010'/%3E%3Cpath d='M50 15L80 28V48C80 69 67 84 50 90C33 84 20 69 20 48V28L50 15Z' fill='none' stroke='%23fff' stroke-width='7'/%3E%3C/svg%3E";
+
 
     save();
+
     render();
+
 }
 
 
-/* =========================
+/* ======================================================
    EVENTS
-   ========================= */
+====================================================== */
 
 document
-    .getElementById("newTabBtn")
+    .getElementById(
+        "newTabBtn"
+    )
     .addEventListener(
         "click",
-        () => createTab(true)
+        () =>
+            createTab(true)
     );
 
 
 document
-    .getElementById("backBtn")
+    .getElementById(
+        "backBtn"
+    )
     .addEventListener(
         "click",
         goBack
@@ -2345,7 +4004,9 @@ document
 
 
 document
-    .getElementById("forwardBtn")
+    .getElementById(
+        "forwardBtn"
+    )
     .addEventListener(
         "click",
         goForward
@@ -2353,7 +4014,9 @@ document
 
 
 document
-    .getElementById("refreshBtn")
+    .getElementById(
+        "refreshBtn"
+    )
     .addEventListener(
         "click",
         reload
@@ -2361,7 +4024,9 @@ document
 
 
 document
-    .getElementById("bookmarkBtn")
+    .getElementById(
+        "bookmarkBtn"
+    )
     .addEventListener(
         "click",
         toggleBookmark
@@ -2369,100 +4034,129 @@ document
 
 
 document
-    .getElementById("address")
+    .getElementById(
+        "address"
+    )
     .addEventListener(
         "keydown",
-        e => {
+        event => {
 
-            if (e.key === "Enter") {
-                navigate(e.target.value);
-            }
-        }
-    );
+            if (
+                event.key ===
+                "Enter"
+            ) {
 
-
-document
-    .getElementById("menuBtn")
-    .addEventListener(
-        "click",
-        e => {
-
-            e.stopPropagation();
-
-            const menu =
-                document.getElementById(
-                    "mainMenu"
+                navigate(
+                    event.target.value
                 );
 
-            menu.classList.toggle("open");
+            }
+
         }
     );
 
 
 document
-    .getElementById("menuNewTab")
+    .getElementById(
+        "menuBtn"
+    )
+    .addEventListener(
+        "click",
+        event => {
+
+            event.stopPropagation();
+
+
+            document
+                .getElementById(
+                    "mainMenu"
+                )
+                .classList.toggle(
+                    "open"
+                );
+
+        }
+    );
+
+
+document
+    .getElementById(
+        "menuNewTab"
+    )
     .addEventListener(
         "click",
         () => {
 
             closeMenu();
+
             createTab(true);
+
         }
     );
 
 
 document
-    .getElementById("menuBookmark")
+    .getElementById(
+        "menuBookmark"
+    )
     .addEventListener(
         "click",
         () => {
 
             toggleBookmark();
+
             closeMenu();
+
         }
     );
 
 
 document
-    .getElementById("menuBookmarks")
+    .getElementById(
+        "menuBookmarks"
+    )
     .addEventListener(
         "click",
-        () => {
-
+        () =>
             openPanel(
                 "bookmarksPanel"
-            );
-        }
+            )
     );
 
 
 document
-    .getElementById("menuRename")
+    .getElementById(
+        "menuRename"
+    )
     .addEventListener(
         "click",
         () => {
 
             closeMenu();
+
             renameCurrentTab();
+
         }
     );
 
 
 document
-    .getElementById("menuSettings")
+    .getElementById(
+        "menuSettings"
+    )
     .addEventListener(
         "click",
-        () => {
-
+        () =>
             openPanel(
                 "settingsPanel"
-            );
-        }
+            )
     );
 
 
 document
-    .getElementById("backdrop")
+    .getElementById(
+        "backdrop"
+    )
     .addEventListener(
         "click",
         closePanels
@@ -2470,60 +4164,81 @@ document
 
 
 document
-    .querySelectorAll("[data-close-panel]")
-    .forEach(button => {
+    .querySelectorAll(
+        "[data-close-panel]"
+    )
+    .forEach(
+        button => {
 
-        button.addEventListener(
-            "click",
-            closePanels
-        );
-    });
+            button.addEventListener(
+                "click",
+                closePanels
+            );
 
-
-document
-    .querySelectorAll("[data-theme]")
-    .forEach(button => {
-
-        button.addEventListener(
-            "click",
-            () => {
-
-                applyTheme(
-                    button.dataset.theme
-                );
-
-                render();
-            }
-        );
-    });
+        }
+    );
 
 
 document
-    .getElementById("applyColors")
+    .querySelectorAll(
+        "[data-theme]"
+    )
+    .forEach(
+        button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    applyTheme(
+                        button.dataset.theme
+                    );
+
+                    render();
+
+                }
+            );
+
+        }
+    );
+
+
+document
+    .getElementById(
+        "applyColors"
+    )
     .addEventListener(
         "click",
         () => {
 
             applyCustomColors();
+
             render();
+
         }
     );
 
 
 document
-    .getElementById("applyBackground")
+    .getElementById(
+        "applyBackground"
+    )
     .addEventListener(
         "click",
         () => {
 
             applyBackground();
+
             render();
+
         }
     );
 
 
 document
-    .getElementById("applyCloak")
+    .getElementById(
+        "applyCloak"
+    )
     .addEventListener(
         "click",
         applyCloak
@@ -2531,7 +4246,9 @@ document
 
 
 document
-    .getElementById("resetSettings")
+    .getElementById(
+        "resetSettings"
+    )
     .addEventListener(
         "click",
         resetSettings
@@ -2540,135 +4257,402 @@ document
 
 document.addEventListener(
     "click",
-    e => {
+    event => {
 
         const menu =
             document.getElementById(
                 "mainMenu"
             );
 
+
         if (
-            !menu.contains(e.target) &&
-            !e.target.closest("#menuBtn")
+            !menu.contains(
+                event.target
+            ) &&
+            !event.target.closest(
+                "#menuBtn"
+            )
         ) {
+
             closeMenu();
+
         }
+
     }
 );
 
 
-/* =========================
+/* ======================================================
    KEYBOARD SHORTCUTS
-   ========================= */
+====================================================== */
 
 document.addEventListener(
     "keydown",
-    e => {
+    event => {
 
         const modifier =
-            e.ctrlKey || e.metaKey;
+            event.ctrlKey ||
+            event.metaKey;
+
 
         if (
             modifier &&
-            e.key.toLowerCase() === "l"
+            event.key.toLowerCase() ===
+            "l"
         ) {
 
-            e.preventDefault();
+            event.preventDefault();
+
 
             const address =
                 document.getElementById(
                     "address"
                 );
 
+
             address.focus();
+
             address.select();
+
         }
 
 
         if (
             modifier &&
-            e.key.toLowerCase() === "t"
+            event.key.toLowerCase() ===
+            "t"
         ) {
 
-            e.preventDefault();
+            event.preventDefault();
+
             createTab(true);
+
         }
 
 
         if (
             modifier &&
-            e.key.toLowerCase() === "w"
+            event.key.toLowerCase() ===
+            "w"
         ) {
 
-            e.preventDefault();
+            event.preventDefault();
+
 
             if (activeTabId) {
-                closeTab(activeTabId);
+
+                closeTab(
+                    activeTabId
+                );
+
             }
+
         }
 
 
         if (
             modifier &&
-            e.key.toLowerCase() === "d"
+            event.key.toLowerCase() ===
+            "d"
         ) {
 
-            e.preventDefault();
+            event.preventDefault();
+
             toggleBookmark();
+
         }
 
 
         if (
-            e.altKey &&
-            e.key === "ArrowLeft"
+            event.altKey &&
+            event.key ===
+            "ArrowLeft"
         ) {
 
-            e.preventDefault();
+            event.preventDefault();
+
             goBack();
+
         }
 
 
         if (
-            e.altKey &&
-            e.key === "ArrowRight"
+            event.altKey &&
+            event.key ===
+            "ArrowRight"
         ) {
 
-            e.preventDefault();
+            event.preventDefault();
+
             goForward();
+
         }
 
 
         if (
             modifier &&
-            e.key.toLowerCase() === "r"
+            event.key.toLowerCase() ===
+            "r"
         ) {
 
-            e.preventDefault();
+            event.preventDefault();
+
             reload();
+
         }
+
     }
 );
 
 
-/* =========================
-   INITIALIZATION
-   ========================= */
+/* ======================================================
+   COOKIE CONSENT
+====================================================== */
 
-load();
+function showCookieConsent() {
 
-applyCSSVariables();
+    /*
+        No cookie is created before the user chooses.
 
-document.title =
-    cloak.title || "Veil";
+        If they select No, consent remains false and
+        nothing is persisted.
+    */
 
-if (cloak.icon) {
+    const overlay =
+        document.createElement(
+            "div"
+        );
 
-    document.getElementById(
-        "favicon"
-    ).href = cloak.icon;
+
+    overlay.className =
+        "cookie-overlay";
+
+
+    overlay.innerHTML = `
+
+        <div class="cookie-box">
+
+            <div class="cookie-logo">
+
+                <svg
+                    viewBox="0 0 100 100"
+                    fill="none"
+                >
+
+                    <path
+                        d="M50 12L82 26V47C82 69 68 85 50 91C32 85 18 69 18 47V26L50 12Z"
+                        stroke="currentColor"
+                        stroke-width="7"
+                    />
+
+                </svg>
+
+            </div>
+
+
+            <h2>
+                Allow cookies?
+            </h2>
+
+
+            <p>
+                Veil can use cookies to remember
+                your bookmarks, appearance,
+                background, and other browser
+                preferences.
+                <br><br>
+                If you choose No, Veil will still
+                work, but nothing will be saved
+                between visits.
+            </p>
+
+
+            <div class="cookie-buttons">
+
+                <button
+                    class="cookie-no"
+                    id="cookieNo"
+                >
+                    No
+                </button>
+
+
+                <button
+                    class="cookie-yes"
+                    id="cookieYes"
+                >
+                    Yes
+                </button>
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    document.body.appendChild(
+        overlay
+    );
+
+
+    document
+        .getElementById(
+            "cookieYes"
+        )
+        .addEventListener(
+            "click",
+            () => {
+
+                COOKIE.consent =
+                    true;
+
+
+                /*
+                    The consent cookie is the
+                    first cookie created.
+                */
+
+                COOKIE.set(
+                    "veil_cookie_consent",
+                    "yes"
+                );
+
+
+                loadSavedData();
+
+                save();
+
+
+                overlay.remove();
+
+                applyCSSVariables();
+
+                document.title =
+                    cloak.title ||
+                    "Veil";
+
+
+                if (cloak.icon) {
+
+                    document.getElementById(
+                        "favicon"
+                    ).href =
+                        cloak.icon;
+
+                }
+
+
+                render();
+
+            }
+        );
+
+
+    document
+        .getElementById(
+            "cookieNo"
+        )
+        .addEventListener(
+            "click",
+            () => {
+
+                /*
+                    IMPORTANT:
+
+                    No cookie is created here.
+
+                    COOKIE.consent remains false.
+
+                    Therefore no settings,
+                    bookmarks, or other data
+                    will be saved.
+                */
+
+                COOKIE.consent =
+                    false;
+
+
+                overlay.remove();
+
+                render();
+
+            }
+        );
+
 }
 
-render();
+
+/* ======================================================
+   INITIALIZE
+====================================================== */
+
+(function init() {
+
+    /*
+        The consent cookie is the only thing
+        checked before loading saved data.
+    */
+
+    const consent =
+        COOKIE.get(
+            "veil_cookie_consent"
+        );
+
+
+    if (
+        consent ===
+        "yes"
+    ) {
+
+        COOKIE.consent =
+            true;
+
+        loadSavedData();
+
+    }
+
+
+    applyCSSVariables();
+
+
+    document.title =
+        cloak.title ||
+        "Veil";
+
+
+    if (cloak.icon) {
+
+        document.getElementById(
+            "favicon"
+        ).href =
+            cloak.icon;
+
+    }
+
+
+    createTab(true);
+
+
+    /*
+        No consent cookie means the user
+        has not accepted cookies yet.
+
+        Show the popup without storing
+        anything.
+    */
+
+    if (
+        consent !==
+        "yes"
+    ) {
+
+        showCookieConsent();
+
+    }
+
+})();
+
 </script>
 
 </body>
