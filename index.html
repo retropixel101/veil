@@ -1,0 +1,2675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Veil</title>
+<link id="favicon" rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23101010'/%3E%3Cpath d='M50 17L78 29V48C78 67 66 80 50 86C34 80 22 67 22 48V29L50 17Z' fill='none' stroke='%23fff' stroke-width='7'/%3E%3C/svg%3E">
+<style>
+:root {
+    --bg: #101010;
+    --bg2: #151515;
+    --bg3: #1b1b1b;
+    --panel: #181818;
+    --panel2: #202020;
+    --border: #2b2b2b;
+    --text: #f2f2f2;
+    --muted: #8d8d8d;
+    --accent: #ffffff;
+    --accentText: #111111;
+    --danger: #ff5d5d;
+    --shadow: rgba(0,0,0,.45);
+    --newtab: #101010;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+button,
+input {
+    font: inherit;
+}
+
+button {
+    border: 0;
+    color: inherit;
+}
+
+button:focus,
+input:focus {
+    outline: none;
+}
+
+#browser {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+}
+
+/* =========================
+   TOP CHROME
+   ========================= */
+
+.chrome {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 4px 20px var(--shadow);
+    z-index: 100;
+}
+
+.tabs-row {
+    height: 42px;
+    display: flex;
+    align-items: flex-end;
+    padding: 0 8px;
+    gap: 4px;
+}
+
+.tabs {
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.tab {
+    height: 36px;
+    min-width: 145px;
+    max-width: 235px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 9px 0 12px;
+    border-radius: 9px 9px 0 0;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+    transition: .15s ease;
+}
+
+.tab:hover {
+    background: var(--bg3);
+    color: var(--text);
+}
+
+.tab.active {
+    background: var(--panel);
+    color: var(--text);
+}
+
+.tab-icon {
+    width: 15px;
+    height: 15px;
+    border-radius: 4px;
+    flex: 0 0 15px;
+    background: var(--panel2);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+}
+
+.tab-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.tab-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    font-size: 12px;
+}
+
+.tab-close {
+    width: 21px;
+    height: 21px;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    font-size: 15px;
+}
+
+.tab-close:hover {
+    background: var(--panel2);
+    color: var(--text);
+}
+
+.new-tab {
+    width: 32px;
+    height: 32px;
+    margin-bottom: 2px;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 21px;
+}
+
+.new-tab:hover {
+    background: var(--panel2);
+    color: var(--text);
+}
+
+/* =========================
+   TOOLBAR
+   ========================= */
+
+.toolbar {
+    height: 52px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 9px;
+    background: var(--panel);
+}
+
+.nav-buttons {
+    display: flex;
+    gap: 2px;
+}
+
+.tool-btn {
+    width: 35px;
+    height: 35px;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    font-size: 18px;
+    transition: .15s ease;
+}
+
+.tool-btn:hover {
+    background: var(--panel2);
+    color: var(--text);
+}
+
+.tool-btn:disabled {
+    opacity: .3;
+    cursor: default;
+}
+
+.address-wrap {
+    flex: 1;
+    height: 35px;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    border-radius: 18px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 0 8px 0 13px;
+    transition: .15s ease;
+}
+
+.address-wrap:focus-within {
+    border-color: #444;
+    background: var(--bg3);
+}
+
+.address-icon {
+    color: var(--muted);
+    margin-right: 8px;
+    font-size: 13px;
+}
+
+#address {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: 0;
+    color: var(--text);
+    font-size: 13px;
+}
+
+#address::placeholder {
+    color: #666;
+}
+
+.address-bookmark {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+}
+
+.address-bookmark:hover {
+    background: var(--panel2);
+    color: var(--text);
+}
+
+.address-bookmark.saved {
+    color: var(--accent);
+}
+
+.menu-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 20px;
+    letter-spacing: 2px;
+}
+
+.menu-btn:hover {
+    background: var(--panel2);
+    color: var(--text);
+}
+
+/* =========================
+   CONTENT
+   ========================= */
+
+.viewport {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    background: var(--bg);
+}
+
+.page {
+    width: 100%;
+    height: 100%;
+    display: none;
+}
+
+.page.active {
+    display: block;
+}
+
+.engine-frame {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: white;
+}
+
+/* =========================
+   NEW TAB
+   ========================= */
+
+.newtab-page {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background:
+        var(--newtab);
+    background-size: cover;
+    background-position: center;
+    position: relative;
+}
+
+.newtab-overlay {
+    min-height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    background: rgba(0,0,0,.12);
+}
+
+.newtab-center {
+    width: min(700px, 100%);
+    text-align: center;
+}
+
+.veil-mark {
+    width: 74px;
+    height: 74px;
+    margin: 0 auto 22px;
+    border-radius: 22px;
+    background: rgba(255,255,255,.055);
+    border: 1px solid rgba(255,255,255,.08);
+    display: grid;
+    place-items: center;
+    box-shadow: 0 20px 70px rgba(0,0,0,.35);
+}
+
+.veil-mark svg {
+    width: 42px;
+    height: 42px;
+}
+
+.newtab-title {
+    font-size: clamp(42px, 7vw, 70px);
+    font-weight: 700;
+    letter-spacing: -3px;
+    line-height: 1;
+}
+
+.newtab-subtitle {
+    color: var(--muted);
+    margin-top: 12px;
+    font-size: 14px;
+}
+
+.search-box {
+    width: min(620px, 100%);
+    height: 54px;
+    margin: 30px auto 0;
+    border-radius: 17px;
+    background: rgba(20,20,20,.9);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 18px;
+    box-shadow: 0 15px 50px rgba(0,0,0,.25);
+}
+
+.search-box span {
+    color: var(--muted);
+    margin-right: 11px;
+}
+
+.search-box input {
+    flex: 1;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font-size: 14px;
+}
+
+.quick-links {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 9px;
+    margin-top: 22px;
+}
+
+.quick-link {
+    border: 1px solid var(--border);
+    background: rgba(20,20,20,.72);
+    color: var(--muted);
+    padding: 9px 13px;
+    border-radius: 11px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.quick-link:hover {
+    color: var(--text);
+    background: var(--panel2);
+}
+
+/* =========================
+   MENU
+   ========================= */
+
+.menu {
+    position: fixed;
+    top: 83px;
+    right: 10px;
+    width: 245px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    padding: 7px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.5);
+    z-index: 1000;
+    display: none;
+}
+
+.menu.open {
+    display: block;
+}
+
+.menu-item {
+    width: 100%;
+    height: 38px;
+    padding: 0 11px;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    cursor: pointer;
+    text-align: left;
+    font-size: 13px;
+}
+
+.menu-item:hover {
+    background: var(--panel2);
+}
+
+.menu-icon {
+    width: 20px;
+    text-align: center;
+    color: var(--muted);
+}
+
+.menu-separator {
+    height: 1px;
+    background: var(--border);
+    margin: 6px 4px;
+}
+
+/* =========================
+   PANELS
+   ========================= */
+
+.backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.55);
+    z-index: 1100;
+    display: none;
+}
+
+.backdrop.open {
+    display: block;
+}
+
+.panel {
+    position: fixed;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: min(430px, 100%);
+    background: var(--panel);
+    border-left: 1px solid var(--border);
+    z-index: 1200;
+    transform: translateX(100%);
+    transition: transform .22s ease;
+    box-shadow: -20px 0 70px rgba(0,0,0,.4);
+    display: flex;
+    flex-direction: column;
+}
+
+.panel.open {
+    transform: translateX(0);
+}
+
+.panel-header {
+    height: 65px;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.panel-header h2 {
+    font-size: 17px;
+}
+
+.close-panel {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 20px;
+}
+
+.close-panel:hover {
+    background: var(--panel2);
+    color: var(--text);
+}
+
+.panel-body {
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.setting-section {
+    margin-bottom: 27px;
+}
+
+.setting-title {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .09em;
+    margin-bottom: 11px;
+}
+
+.preset-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 9px;
+}
+
+.preset {
+    min-height: 67px;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    border-radius: 11px;
+    cursor: pointer;
+    text-align: left;
+    padding: 10px;
+}
+
+.preset:hover {
+    border-color: #444;
+}
+
+.preset-name {
+    font-size: 12px;
+    margin-bottom: 9px;
+}
+
+.preset-preview {
+    display: flex;
+    gap: 5px;
+}
+
+.preset-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+}
+
+.input-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 9px;
+}
+
+.input-label {
+    width: 90px;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.text-input {
+    flex: 1;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    color: var(--text);
+    padding: 0 10px;
+    font-size: 12px;
+}
+
+.color-input {
+    width: 45px;
+    height: 36px;
+    padding: 3px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    cursor: pointer;
+}
+
+.primary-btn {
+    width: 100%;
+    height: 39px;
+    border-radius: 9px;
+    background: var(--accent);
+    color: var(--accentText);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.secondary-btn {
+    width: 100%;
+    height: 39px;
+    border-radius: 9px;
+    background: var(--panel2);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.secondary-btn:hover {
+    background: #292929;
+}
+
+.small-note {
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.5;
+    margin-top: 8px;
+}
+
+/* =========================
+   BOOKMARKS
+   ========================= */
+
+.bookmarks-empty {
+    text-align: center;
+    padding: 35px 15px;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.bookmark-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    border-radius: 10px;
+    padding: 9px;
+    margin-bottom: 7px;
+}
+
+.bookmark-info {
+    flex: 1;
+    min-width: 0;
+    cursor: pointer;
+}
+
+.bookmark-name {
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.bookmark-url {
+    font-size: 10px;
+    color: var(--muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-top: 3px;
+}
+
+.bookmark-delete {
+    width: 27px;
+    height: 27px;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+}
+
+.bookmark-delete:hover {
+    color: var(--danger);
+    background: rgba(255,80,80,.08);
+}
+
+/* =========================
+   RESPONSIVE
+   ========================= */
+
+@media (max-width: 650px) {
+    .tab {
+        min-width: 125px;
+    }
+
+    .nav-buttons .tool-btn {
+        width: 31px;
+    }
+
+    .toolbar {
+        gap: 3px;
+    }
+
+    .newtab-title {
+        letter-spacing: -2px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div id="browser">
+
+    <header class="chrome">
+
+        <div class="tabs-row">
+            <div class="tabs" id="tabs"></div>
+
+            <button class="new-tab" id="newTabBtn" title="New tab">
+                +
+            </button>
+        </div>
+
+        <div class="toolbar">
+
+            <div class="nav-buttons">
+
+                <button class="tool-btn" id="backBtn" title="Back">
+                    ←
+                </button>
+
+                <button class="tool-btn" id="forwardBtn" title="Forward">
+                    →
+                </button>
+
+                <button class="tool-btn" id="refreshBtn" title="Refresh">
+                    ↻
+                </button>
+
+            </div>
+
+            <div class="address-wrap">
+
+                <span class="address-icon" id="addressIcon">⌕</span>
+
+                <input
+                    id="address"
+                    type="text"
+                    autocomplete="off"
+                    spellcheck="false"
+                    placeholder="Search or enter address"
+                >
+
+                <button
+                    class="address-bookmark"
+                    id="bookmarkBtn"
+                    title="Bookmark"
+                >
+                    ☆
+                </button>
+
+            </div>
+
+            <button class="menu-btn" id="menuBtn" title="Menu">
+                ⋮
+            </button>
+
+        </div>
+
+    </header>
+
+    <main class="viewport" id="viewport"></main>
+
+</div>
+
+
+<!-- =========================
+     THREE DOT MENU
+     ========================= -->
+
+<div class="menu" id="mainMenu">
+
+    <button class="menu-item" id="menuNewTab">
+        <span class="menu-icon">＋</span>
+        New tab
+    </button>
+
+    <button class="menu-item" id="menuBookmark">
+        <span class="menu-icon">☆</span>
+        Bookmark this page
+    </button>
+
+    <div class="menu-separator"></div>
+
+    <button class="menu-item" id="menuBookmarks">
+        <span class="menu-icon">★</span>
+        Bookmarks
+    </button>
+
+    <button class="menu-item" id="menuRename">
+        <span class="menu-icon">✎</span>
+        Rename current tab
+    </button>
+
+    <div class="menu-separator"></div>
+
+    <button class="menu-item" id="menuSettings">
+        <span class="menu-icon">⚙</span>
+        Settings
+    </button>
+
+</div>
+
+
+<!-- =========================
+     PANEL BACKDROP
+     ========================= -->
+
+<div class="backdrop" id="backdrop"></div>
+
+
+<!-- =========================
+     SETTINGS
+     ========================= -->
+
+<aside class="panel" id="settingsPanel">
+
+    <div class="panel-header">
+        <h2>Settings</h2>
+
+        <button class="close-panel" data-close-panel>
+            ×
+        </button>
+    </div>
+
+    <div class="panel-body">
+
+        <section class="setting-section">
+
+            <div class="setting-title">
+                Theme
+            </div>
+
+            <div class="preset-grid">
+
+                <button
+                    class="preset"
+                    data-theme="matte"
+                >
+                    <div class="preset-name">
+                        Matte
+                    </div>
+
+                    <div class="preset-preview">
+                        <span class="preset-dot" style="background:#101010"></span>
+                        <span class="preset-dot" style="background:#1b1b1b"></span>
+                        <span class="preset-dot" style="background:#ffffff"></span>
+                    </div>
+                </button>
+
+                <button
+                    class="preset"
+                    data-theme="midnight"
+                >
+                    <div class="preset-name">
+                        Midnight
+                    </div>
+
+                    <div class="preset-preview">
+                        <span class="preset-dot" style="background:#080b12"></span>
+                        <span class="preset-dot" style="background:#121827"></span>
+                        <span class="preset-dot" style="background:#7aa2ff"></span>
+                    </div>
+                </button>
+
+                <button
+                    class="preset"
+                    data-theme="slate"
+                >
+                    <div class="preset-name">
+                        Slate
+                    </div>
+
+                    <div class="preset-preview">
+                        <span class="preset-dot" style="background:#16191d"></span>
+                        <span class="preset-dot" style="background:#24282e"></span>
+                        <span class="preset-dot" style="background:#bfc8d6"></span>
+                    </div>
+                </button>
+
+                <button
+                    class="preset"
+                    data-theme="red"
+                >
+                    <div class="preset-name">
+                        Ember
+                    </div>
+
+                    <div class="preset-preview">
+                        <span class="preset-dot" style="background:#110c0c"></span>
+                        <span class="preset-dot" style="background:#241414"></span>
+                        <span class="preset-dot" style="background:#ff6868"></span>
+                    </div>
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <section class="setting-section">
+
+            <div class="setting-title">
+                Custom colors
+            </div>
+
+            <div class="input-row">
+                <span class="input-label">Background</span>
+                <input class="color-input" type="color" id="colorBg">
+            </div>
+
+            <div class="input-row">
+                <span class="input-label">Panels</span>
+                <input class="color-input" type="color" id="colorPanel">
+            </div>
+
+            <div class="input-row">
+                <span class="input-label">Accent</span>
+                <input class="color-input" type="color" id="colorAccent">
+            </div>
+
+            <div class="input-row">
+                <span class="input-label">Text</span>
+                <input class="color-input" type="color" id="colorText">
+            </div>
+
+            <button class="primary-btn" id="applyColors">
+                Apply custom colors
+            </button>
+
+        </section>
+
+
+        <section class="setting-section">
+
+            <div class="setting-title">
+                New tab background
+            </div>
+
+            <div class="input-row">
+
+                <input
+                    class="text-input"
+                    id="backgroundUrl"
+                    placeholder="Image URL"
+                >
+
+            </div>
+
+            <button class="primary-btn" id="applyBackground">
+                Apply background
+            </button>
+
+            <div class="small-note">
+                Leave the field empty to use the current theme background.
+            </div>
+
+        </section>
+
+
+        <section class="setting-section">
+
+            <div class="setting-title">
+                Tab cloak
+            </div>
+
+            <div class="input-row">
+
+                <input
+                    class="text-input"
+                    id="cloakTitle"
+                    placeholder="Browser tab title"
+                >
+
+            </div>
+
+            <div class="input-row">
+
+                <input
+                    class="text-input"
+                    id="cloakIcon"
+                    placeholder="Favicon image URL"
+                >
+
+            </div>
+
+            <button class="primary-btn" id="applyCloak">
+                Apply tab cloak
+            </button>
+
+            <div class="small-note">
+                This changes the title and favicon displayed by the browser tab.
+            </div>
+
+        </section>
+
+
+        <section class="setting-section">
+
+            <div class="setting-title">
+                Reset
+            </div>
+
+            <button class="secondary-btn" id="resetSettings">
+                Reset appearance
+            </button>
+
+        </section>
+
+    </div>
+
+</aside>
+
+
+<!-- =========================
+     BOOKMARKS PANEL
+     ========================= -->
+
+<aside class="panel" id="bookmarksPanel">
+
+    <div class="panel-header">
+        <h2>Bookmarks</h2>
+
+        <button class="close-panel" data-close-panel>
+            ×
+        </button>
+    </div>
+
+    <div class="panel-body" id="bookmarkList"></div>
+
+</aside>
+
+
+<script>
+"use strict";
+
+/*
+    VEIL ENGINE INTEGRATION
+
+    This frontend intentionally does not contain a browsing engine.
+
+    When you add your own engine, the main integration point is:
+
+        VEIL_ENGINE.navigate(url, page)
+
+    and:
+
+        VEIL_ENGINE.reload(page)
+
+    The UI will already manage tabs, history, titles,
+    bookmarks, settings, etc.
+*/
+
+const VEIL_ENGINE = {
+
+    navigate(url, page) {
+        /*
+            Connect your engine here.
+
+            Example conceptual interface:
+
+            yourEngine.load(url, page.engineFrame);
+
+        */
+        console.log("Veil navigation:", url);
+    },
+
+    reload(page) {
+        console.log("Veil reload:", page.url);
+    }
+};
+
+
+/* =========================
+   STORAGE
+   ========================= */
+
+const STORAGE = {
+    tabs: "veil_tabs",
+    bookmarks: "veil_bookmarks",
+    settings: "veil_settings",
+    cloak: "veil_cloak"
+};
+
+
+/* =========================
+   DEFAULT SETTINGS
+   ========================= */
+
+const DEFAULT_SETTINGS = {
+    theme: "matte",
+    bg: "#101010",
+    panel: "#181818",
+    accent: "#ffffff",
+    accentText: "#111111",
+    text: "#f2f2f2",
+    newtab: "#101010",
+    backgroundUrl: ""
+};
+
+
+const THEMES = {
+
+    matte: {
+        bg: "#101010",
+        bg2: "#151515",
+        bg3: "#1b1b1b",
+        panel: "#181818",
+        panel2: "#202020",
+        border: "#2b2b2b",
+        text: "#f2f2f2",
+        muted: "#8d8d8d",
+        accent: "#ffffff",
+        accentText: "#111111",
+        newtab: "#101010"
+    },
+
+    midnight: {
+        bg: "#080b12",
+        bg2: "#0d111b",
+        bg3: "#121827",
+        panel: "#101521",
+        panel2: "#171e2d",
+        border: "#263047",
+        text: "#eef3ff",
+        muted: "#8490a7",
+        accent: "#7aa2ff",
+        accentText: "#08101f",
+        newtab: "#080b12"
+    },
+
+    slate: {
+        bg: "#16191d",
+        bg2: "#1c2025",
+        bg3: "#24282e",
+        panel: "#20242a",
+        panel2: "#2a2f36",
+        border: "#363c45",
+        text: "#edf0f5",
+        muted: "#929aa7",
+        accent: "#bfc8d6",
+        accentText: "#15181c",
+        newtab: "#16191d"
+    },
+
+    red: {
+        bg: "#110c0c",
+        bg2: "#170f0f",
+        bg3: "#241414",
+        panel: "#1d1111",
+        panel2: "#2b1717",
+        border: "#412323",
+        text: "#fff1f1",
+        muted: "#a88989",
+        accent: "#ff6868",
+        accentText: "#190808",
+        newtab: "#110c0c"
+    }
+};
+
+
+/* =========================
+   STATE
+   ========================= */
+
+let tabs = [];
+let activeTabId = null;
+let bookmarks = [];
+let settings = {};
+let cloak = {
+    title: "Veil",
+    icon: ""
+};
+
+
+/* =========================
+   UTILITIES
+   ========================= */
+
+function uid() {
+    return Date.now().toString(36) +
+        Math.random().toString(36).slice(2, 8);
+}
+
+
+function save() {
+
+    localStorage.setItem(
+        STORAGE.tabs,
+        JSON.stringify(tabs)
+    );
+
+    localStorage.setItem(
+        STORAGE.bookmarks,
+        JSON.stringify(bookmarks)
+    );
+
+    localStorage.setItem(
+        STORAGE.settings,
+        JSON.stringify(settings)
+    );
+
+    localStorage.setItem(
+        STORAGE.cloak,
+        JSON.stringify(cloak)
+    );
+}
+
+
+function load() {
+
+    try {
+        tabs =
+            JSON.parse(
+                localStorage.getItem(STORAGE.tabs)
+            ) || [];
+    } catch {
+        tabs = [];
+    }
+
+    try {
+        bookmarks =
+            JSON.parse(
+                localStorage.getItem(STORAGE.bookmarks)
+            ) || [];
+    } catch {
+        bookmarks = [];
+    }
+
+    try {
+        settings =
+            JSON.parse(
+                localStorage.getItem(STORAGE.settings)
+            ) || {};
+    } catch {
+        settings = {};
+    }
+
+    settings = {
+        ...DEFAULT_SETTINGS,
+        ...settings
+    };
+
+    try {
+        cloak =
+            JSON.parse(
+                localStorage.getItem(STORAGE.cloak)
+            ) || cloak;
+    } catch {}
+
+    if (!tabs.length) {
+        createTab(false);
+    }
+
+    if (!activeTabId || !tabs.some(t => t.id === activeTabId)) {
+        activeTabId = tabs[0].id;
+    }
+}
+
+
+/* =========================
+   TAB CREATION
+   ========================= */
+
+function createTab(select = true) {
+
+    const page = {
+        id: uid(),
+        title: "New Tab",
+        url: "",
+        history: [],
+        historyIndex: -1,
+        newTab: true
+    };
+
+    tabs.push(page);
+
+    if (select) {
+        activeTabId = page.id;
+    }
+
+    save();
+    render();
+}
+
+
+function closeTab(id) {
+
+    const index = tabs.findIndex(t => t.id === id);
+
+    if (index === -1) return;
+
+    tabs.splice(index, 1);
+
+    if (!tabs.length) {
+        createTab(true);
+        return;
+    }
+
+    if (activeTabId === id) {
+
+        const next =
+            tabs[index] ||
+            tabs[index - 1] ||
+            tabs[0];
+
+        activeTabId = next.id;
+    }
+
+    save();
+    render();
+}
+
+
+function getActiveTab() {
+    return tabs.find(t => t.id === activeTabId);
+}
+
+
+/* =========================
+   NAVIGATION
+   ========================= */
+
+function navigate(input) {
+
+    const page = getActiveTab();
+
+    if (!page) return;
+
+    let value = input.trim();
+
+    if (!value) return;
+
+    /*
+        Basic address handling.
+
+        This only prepares the URL for your engine.
+    */
+
+    if (
+        !/^https?:\/\//i.test(value)
+    ) {
+
+        if (
+            value.includes(".") &&
+            !value.includes(" ")
+        ) {
+            value = "https://" + value;
+        } else {
+            value =
+                "https://www.google.com/search?q=" +
+                encodeURIComponent(value);
+        }
+    }
+
+    page.newTab = false;
+    page.url = value;
+
+    if (
+        page.historyIndex <
+        page.history.length - 1
+    ) {
+        page.history =
+            page.history.slice(
+                0,
+                page.historyIndex + 1
+            );
+    }
+
+    page.history.push(value);
+    page.historyIndex =
+        page.history.length - 1;
+
+    if (
+        !page.title ||
+        page.title === "New Tab"
+    ) {
+        try {
+            page.title =
+                new URL(value).hostname;
+        } catch {
+            page.title = "Veil";
+        }
+    }
+
+    save();
+    render();
+
+    VEIL_ENGINE.navigate(value, page);
+}
+
+
+function goBack() {
+
+    const page = getActiveTab();
+
+    if (!page) return;
+
+    if (page.historyIndex > 0) {
+
+        page.historyIndex--;
+
+        page.url =
+            page.history[
+                page.historyIndex
+            ];
+
+        page.newTab = false;
+
+        save();
+        render();
+
+        VEIL_ENGINE.navigate(
+            page.url,
+            page
+        );
+    }
+}
+
+
+function goForward() {
+
+    const page = getActiveTab();
+
+    if (!page) return;
+
+    if (
+        page.historyIndex <
+        page.history.length - 1
+    ) {
+
+        page.historyIndex++;
+
+        page.url =
+            page.history[
+                page.historyIndex
+            ];
+
+        page.newTab = false;
+
+        save();
+        render();
+
+        VEIL_ENGINE.navigate(
+            page.url,
+            page
+        );
+    }
+}
+
+
+function reload() {
+
+    const page = getActiveTab();
+
+    if (!page) return;
+
+    if (page.url) {
+        VEIL_ENGINE.reload(page);
+    }
+}
+
+
+/* =========================
+   TAB NAMING
+   ========================= */
+
+function renameCurrentTab() {
+
+    const page = getActiveTab();
+
+    if (!page) return;
+
+    const name =
+        prompt(
+            "Enter a name for this tab:",
+            page.title
+        );
+
+    if (
+        name !== null &&
+        name.trim()
+    ) {
+
+        page.title =
+            name.trim();
+
+        save();
+        render();
+    }
+}
+
+
+/* =========================
+   BOOKMARKS
+   ========================= */
+
+function toggleBookmark() {
+
+    const page = getActiveTab();
+
+    if (!page || !page.url) return;
+
+    const existing =
+        bookmarks.find(
+            b => b.url === page.url
+        );
+
+    if (existing) {
+
+        bookmarks =
+            bookmarks.filter(
+                b => b.url !== page.url
+            );
+
+    } else {
+
+        bookmarks.push({
+            id: uid(),
+            title: page.title || page.url,
+            url: page.url
+        });
+    }
+
+    save();
+    render();
+    renderBookmarks();
+}
+
+
+function isBookmarked(url) {
+
+    return bookmarks.some(
+        b => b.url === url
+    );
+}
+
+
+function renderBookmarks() {
+
+    const list =
+        document.getElementById(
+            "bookmarkList"
+        );
+
+    if (!bookmarks.length) {
+
+        list.innerHTML = `
+            <div class="bookmarks-empty">
+                No bookmarks yet.
+            </div>
+        `;
+
+        return;
+    }
+
+    list.innerHTML = bookmarks.map(b => `
+
+        <div class="bookmark-row">
+
+            <div
+                class="bookmark-info"
+                data-open-bookmark="${escapeHTML(b.url)}"
+            >
+                <div class="bookmark-name">
+                    ${escapeHTML(b.title)}
+                </div>
+
+                <div class="bookmark-url">
+                    ${escapeHTML(b.url)}
+                </div>
+            </div>
+
+            <button
+                class="bookmark-delete"
+                data-delete-bookmark="${b.id}"
+            >
+                ×
+            </button>
+
+        </div>
+
+    `).join("");
+
+    list
+        .querySelectorAll("[data-open-bookmark]")
+        .forEach(el => {
+
+            el.addEventListener(
+                "click",
+                () => {
+
+                    navigate(
+                        el.dataset.openBookmark
+                    );
+
+                    closePanels();
+                }
+            );
+        });
+
+    list
+        .querySelectorAll("[data-delete-bookmark]")
+        .forEach(el => {
+
+            el.addEventListener(
+                "click",
+                () => {
+
+                    bookmarks =
+                        bookmarks.filter(
+                            b =>
+                                b.id !==
+                                el.dataset.deleteBookmark
+                        );
+
+                    save();
+                    renderBookmarks();
+                    render();
+                }
+            );
+        });
+}
+
+
+/* =========================
+   ESCAPE HTML
+   ========================= */
+
+function escapeHTML(value) {
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+/* =========================
+   RENDER TABS
+   ========================= */
+
+function renderTabs() {
+
+    const container =
+        document.getElementById("tabs");
+
+    container.innerHTML =
+        tabs.map(tab => `
+
+        <div
+            class="tab ${tab.id === activeTabId ? "active" : ""}"
+            data-tab-id="${tab.id}"
+        >
+
+            <div class="tab-icon">
+                <span>◉</span>
+            </div>
+
+            <div class="tab-title">
+                ${escapeHTML(tab.title)}
+            </div>
+
+            <button
+                class="tab-close"
+                data-close-tab="${tab.id}"
+            >
+                ×
+            </button>
+
+        </div>
+
+    `).join("");
+
+    container
+        .querySelectorAll("[data-tab-id]")
+        .forEach(tabEl => {
+
+            tabEl.addEventListener(
+                "click",
+                e => {
+
+                    if (
+                        e.target.closest(
+                            "[data-close-tab]"
+                        )
+                    ) return;
+
+                    activeTabId =
+                        tabEl.dataset.tabId;
+
+                    save();
+                    render();
+                }
+            );
+        });
+
+    container
+        .querySelectorAll("[data-close-tab]")
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                e => {
+
+                    e.stopPropagation();
+
+                    closeTab(
+                        button.dataset.closeTab
+                    );
+                }
+            );
+        });
+}
+
+
+/* =========================
+   RENDER CONTENT
+   ========================= */
+
+function renderViewport() {
+
+    const viewport =
+        document.getElementById(
+            "viewport"
+        );
+
+    viewport.innerHTML = "";
+
+    tabs.forEach(page => {
+
+        const wrapper =
+            document.createElement("div");
+
+        wrapper.className =
+            "page" +
+            (
+                page.id === activeTabId
+                    ? " active"
+                    : ""
+            );
+
+        if (page.newTab || !page.url) {
+
+            wrapper.innerHTML = `
+
+                <div
+                    class="newtab-page"
+                    id="newtab-${page.id}"
+                >
+
+                    <div class="newtab-overlay">
+
+                        <div class="newtab-center">
+
+                            <div class="veil-mark">
+
+                                <svg
+                                    viewBox="0 0 100 100"
+                                    fill="none"
+                                >
+
+                                    <path
+                                        d="M50 12L82 26V47C82 69 68 85 50 91C32 85 18 69 18 47V26L50 12Z"
+                                        stroke="currentColor"
+                                        stroke-width="6"
+                                    />
+
+                                    <path
+                                        d="M37 50L46 59L65 39"
+                                        stroke="currentColor"
+                                        stroke-width="6"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+
+                                </svg>
+
+                            </div>
+
+                            <h1 class="newtab-title">
+                                Veil
+                            </h1>
+
+                            <p class="newtab-subtitle">
+                                A quieter way to browse.
+                            </p>
+
+                            <div class="search-box">
+
+                                <span>⌕</span>
+
+                                <input
+                                    class="newtab-search"
+                                    data-page="${page.id}"
+                                    placeholder="Search or enter address"
+                                    autocomplete="off"
+                                >
+
+                            </div>
+
+                            <div class="quick-links">
+
+                                <button
+                                    class="quick-link"
+                                    data-action="bookmarks"
+                                >
+                                    Bookmarks
+                                </button>
+
+                                <button
+                                    class="quick-link"
+                                    data-action="settings"
+                                >
+                                    Settings
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            `;
+
+        } else {
+
+            /*
+                Your engine can replace this frame.
+
+                Keeping the element here gives the engine
+                a predictable DOM target.
+            */
+
+            const frame =
+                document.createElement("iframe");
+
+            frame.className =
+                "engine-frame";
+
+            frame.setAttribute(
+                "data-veil-engine-frame",
+                page.id
+            );
+
+            frame.src =
+                "about:blank";
+
+            wrapper.appendChild(frame);
+        }
+
+        viewport.appendChild(wrapper);
+    });
+
+
+    document
+        .querySelectorAll(".newtab-search")
+        .forEach(input => {
+
+            input.addEventListener(
+                "keydown",
+                e => {
+
+                    if (e.key === "Enter") {
+
+                        activeTabId =
+                            input.dataset.page;
+
+                        navigate(
+                            input.value
+                        );
+                    }
+                }
+            );
+        });
+
+
+    document
+        .querySelectorAll(
+            '[data-action="bookmarks"]'
+        )
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => openPanel("bookmarksPanel")
+            );
+        });
+
+
+    document
+        .querySelectorAll(
+            '[data-action="settings"]'
+        )
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => openPanel("settingsPanel")
+            );
+        });
+
+
+    applyNewTabBackground();
+}
+
+
+/* =========================
+   TOOLBAR
+   ========================= */
+
+function renderToolbar() {
+
+    const page = getActiveTab();
+
+    const address =
+        document.getElementById(
+            "address"
+        );
+
+    address.value =
+        page && page.url
+            ? page.url
+            : "";
+
+    document.getElementById(
+        "backBtn"
+    ).disabled =
+        !page ||
+        page.historyIndex <= 0;
+
+    document.getElementById(
+        "forwardBtn"
+    ).disabled =
+        !page ||
+        page.historyIndex >=
+        page.history.length - 1;
+
+    const bookmarkBtn =
+        document.getElementById(
+            "bookmarkBtn"
+        );
+
+    if (
+        page &&
+        page.url &&
+        isBookmarked(page.url)
+    ) {
+
+        bookmarkBtn.classList.add("saved");
+        bookmarkBtn.textContent = "★";
+
+    } else {
+
+        bookmarkBtn.classList.remove("saved");
+        bookmarkBtn.textContent = "☆";
+    }
+}
+
+
+/* =========================
+   COMPLETE RENDER
+   ========================= */
+
+function render() {
+
+    renderTabs();
+    renderViewport();
+    renderToolbar();
+}
+
+
+/* =========================
+   THEME
+   ========================= */
+
+function applyTheme(themeName) {
+
+    const theme =
+        THEMES[themeName];
+
+    if (!theme) return;
+
+    settings = {
+        ...settings,
+        ...theme,
+        theme: themeName
+    };
+
+    applyCSSVariables();
+
+    save();
+}
+
+
+function applyCSSVariables() {
+
+    const root =
+        document.documentElement;
+
+    const keys = [
+        "bg",
+        "bg2",
+        "bg3",
+        "panel",
+        "panel2",
+        "border",
+        "text",
+        "muted",
+        "accent",
+        "accentText",
+        "newtab"
+    ];
+
+    keys.forEach(key => {
+
+        if (settings[key]) {
+
+            root.style.setProperty(
+                "--" + key,
+                settings[key]
+            );
+        }
+    });
+}
+
+
+function applyCustomColors() {
+
+    settings.bg =
+        document.getElementById(
+            "colorBg"
+        ).value;
+
+    settings.panel =
+        document.getElementById(
+            "colorPanel"
+        ).value;
+
+    settings.accent =
+        document.getElementById(
+            "colorAccent"
+        ).value;
+
+    settings.text =
+        document.getElementById(
+            "colorText"
+        ).value;
+
+    settings.theme = "custom";
+
+    applyCSSVariables();
+    save();
+}
+
+
+function loadColorInputs() {
+
+    document.getElementById(
+        "colorBg"
+    ).value =
+        settings.bg || "#101010";
+
+    document.getElementById(
+        "colorPanel"
+    ).value =
+        settings.panel || "#181818";
+
+    document.getElementById(
+        "colorAccent"
+    ).value =
+        settings.accent || "#ffffff";
+
+    document.getElementById(
+        "colorText"
+    ).value =
+        settings.text || "#f2f2f2";
+}
+
+
+/* =========================
+   NEW TAB BACKGROUND
+   ========================= */
+
+function applyNewTabBackground() {
+
+    document
+        .querySelectorAll(".newtab-page")
+        .forEach(page => {
+
+            if (settings.backgroundUrl) {
+
+                page.style.backgroundImage =
+                    `url("${settings.backgroundUrl}")`;
+
+            } else {
+
+                page.style.backgroundImage =
+                    "none";
+
+                page.style.backgroundColor =
+                    settings.newtab ||
+                    settings.bg ||
+                    "#101010";
+            }
+        });
+}
+
+
+function applyBackground() {
+
+    settings.backgroundUrl =
+        document.getElementById(
+            "backgroundUrl"
+        ).value.trim();
+
+    save();
+
+    applyNewTabBackground();
+}
+
+
+/* =========================
+   TAB CLOAK
+   ========================= */
+
+function applyCloak() {
+
+    const title =
+        document.getElementById(
+            "cloakTitle"
+        ).value.trim();
+
+    const icon =
+        document.getElementById(
+            "cloakIcon"
+        ).value.trim();
+
+    cloak.title =
+        title || "Veil";
+
+    cloak.icon = icon;
+
+    document.title =
+        cloak.title;
+
+    const favicon =
+        document.getElementById(
+            "favicon"
+        );
+
+    if (icon) {
+
+        favicon.href = icon;
+
+    } else {
+
+        favicon.href =
+            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23101010'/%3E%3Cpath d='M50 17L78 29V48C78 67 66 80 50 86C34 80 22 67 22 48V29L50 17Z' fill='none' stroke='%23fff' stroke-width='7'/%3E%3C/svg%3E";
+    }
+
+    save();
+}
+
+
+/* =========================
+   PANELS
+   ========================= */
+
+function openPanel(id) {
+
+    closeMenu();
+
+    document
+        .getElementById("backdrop")
+        .classList.add("open");
+
+    document
+        .getElementById(id)
+        .classList.add("open");
+
+    if (id === "bookmarksPanel") {
+        renderBookmarks();
+    }
+
+    if (id === "settingsPanel") {
+
+        loadColorInputs();
+
+        document.getElementById(
+            "backgroundUrl"
+        ).value =
+            settings.backgroundUrl || "";
+
+        document.getElementById(
+            "cloakTitle"
+        ).value =
+            cloak.title || "Veil";
+
+        document.getElementById(
+            "cloakIcon"
+        ).value =
+            cloak.icon || "";
+    }
+}
+
+
+function closePanels() {
+
+    document
+        .querySelectorAll(".panel")
+        .forEach(panel =>
+            panel.classList.remove("open")
+        );
+
+    document
+        .getElementById("backdrop")
+        .classList.remove("open");
+}
+
+
+/* =========================
+   MENU
+   ========================= */
+
+function openMenu() {
+
+    document
+        .getElementById("mainMenu")
+        .classList.add("open");
+}
+
+
+function closeMenu() {
+
+    document
+        .getElementById("mainMenu")
+        .classList.remove("open");
+}
+
+
+/* =========================
+   RESET
+   ========================= */
+
+function resetSettings() {
+
+    settings = {
+        ...DEFAULT_SETTINGS
+    };
+
+    cloak = {
+        title: "Veil",
+        icon: ""
+    };
+
+    document.title = "Veil";
+
+    applyTheme("matte");
+
+    const favicon =
+        document.getElementById(
+            "favicon"
+        );
+
+    favicon.href =
+        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23101010'/%3E%3Cpath d='M50 17L78 29V48C78 67 66 80 50 86C34 80 22 67 22 48V29L50 17Z' fill='none' stroke='%23fff' stroke-width='7'/%3E%3C/svg%3E";
+
+    save();
+    render();
+}
+
+
+/* =========================
+   EVENTS
+   ========================= */
+
+document
+    .getElementById("newTabBtn")
+    .addEventListener(
+        "click",
+        () => createTab(true)
+    );
+
+
+document
+    .getElementById("backBtn")
+    .addEventListener(
+        "click",
+        goBack
+    );
+
+
+document
+    .getElementById("forwardBtn")
+    .addEventListener(
+        "click",
+        goForward
+    );
+
+
+document
+    .getElementById("refreshBtn")
+    .addEventListener(
+        "click",
+        reload
+    );
+
+
+document
+    .getElementById("bookmarkBtn")
+    .addEventListener(
+        "click",
+        toggleBookmark
+    );
+
+
+document
+    .getElementById("address")
+    .addEventListener(
+        "keydown",
+        e => {
+
+            if (e.key === "Enter") {
+                navigate(e.target.value);
+            }
+        }
+    );
+
+
+document
+    .getElementById("menuBtn")
+    .addEventListener(
+        "click",
+        e => {
+
+            e.stopPropagation();
+
+            const menu =
+                document.getElementById(
+                    "mainMenu"
+                );
+
+            menu.classList.toggle("open");
+        }
+    );
+
+
+document
+    .getElementById("menuNewTab")
+    .addEventListener(
+        "click",
+        () => {
+
+            closeMenu();
+            createTab(true);
+        }
+    );
+
+
+document
+    .getElementById("menuBookmark")
+    .addEventListener(
+        "click",
+        () => {
+
+            toggleBookmark();
+            closeMenu();
+        }
+    );
+
+
+document
+    .getElementById("menuBookmarks")
+    .addEventListener(
+        "click",
+        () => {
+
+            openPanel(
+                "bookmarksPanel"
+            );
+        }
+    );
+
+
+document
+    .getElementById("menuRename")
+    .addEventListener(
+        "click",
+        () => {
+
+            closeMenu();
+            renameCurrentTab();
+        }
+    );
+
+
+document
+    .getElementById("menuSettings")
+    .addEventListener(
+        "click",
+        () => {
+
+            openPanel(
+                "settingsPanel"
+            );
+        }
+    );
+
+
+document
+    .getElementById("backdrop")
+    .addEventListener(
+        "click",
+        closePanels
+    );
+
+
+document
+    .querySelectorAll("[data-close-panel]")
+    .forEach(button => {
+
+        button.addEventListener(
+            "click",
+            closePanels
+        );
+    });
+
+
+document
+    .querySelectorAll("[data-theme]")
+    .forEach(button => {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                applyTheme(
+                    button.dataset.theme
+                );
+
+                render();
+            }
+        );
+    });
+
+
+document
+    .getElementById("applyColors")
+    .addEventListener(
+        "click",
+        () => {
+
+            applyCustomColors();
+            render();
+        }
+    );
+
+
+document
+    .getElementById("applyBackground")
+    .addEventListener(
+        "click",
+        () => {
+
+            applyBackground();
+            render();
+        }
+    );
+
+
+document
+    .getElementById("applyCloak")
+    .addEventListener(
+        "click",
+        applyCloak
+    );
+
+
+document
+    .getElementById("resetSettings")
+    .addEventListener(
+        "click",
+        resetSettings
+    );
+
+
+document.addEventListener(
+    "click",
+    e => {
+
+        const menu =
+            document.getElementById(
+                "mainMenu"
+            );
+
+        if (
+            !menu.contains(e.target) &&
+            !e.target.closest("#menuBtn")
+        ) {
+            closeMenu();
+        }
+    }
+);
+
+
+/* =========================
+   KEYBOARD SHORTCUTS
+   ========================= */
+
+document.addEventListener(
+    "keydown",
+    e => {
+
+        const modifier =
+            e.ctrlKey || e.metaKey;
+
+        if (
+            modifier &&
+            e.key.toLowerCase() === "l"
+        ) {
+
+            e.preventDefault();
+
+            const address =
+                document.getElementById(
+                    "address"
+                );
+
+            address.focus();
+            address.select();
+        }
+
+
+        if (
+            modifier &&
+            e.key.toLowerCase() === "t"
+        ) {
+
+            e.preventDefault();
+            createTab(true);
+        }
+
+
+        if (
+            modifier &&
+            e.key.toLowerCase() === "w"
+        ) {
+
+            e.preventDefault();
+
+            if (activeTabId) {
+                closeTab(activeTabId);
+            }
+        }
+
+
+        if (
+            modifier &&
+            e.key.toLowerCase() === "d"
+        ) {
+
+            e.preventDefault();
+            toggleBookmark();
+        }
+
+
+        if (
+            e.altKey &&
+            e.key === "ArrowLeft"
+        ) {
+
+            e.preventDefault();
+            goBack();
+        }
+
+
+        if (
+            e.altKey &&
+            e.key === "ArrowRight"
+        ) {
+
+            e.preventDefault();
+            goForward();
+        }
+
+
+        if (
+            modifier &&
+            e.key.toLowerCase() === "r"
+        ) {
+
+            e.preventDefault();
+            reload();
+        }
+    }
+);
+
+
+/* =========================
+   INITIALIZATION
+   ========================= */
+
+load();
+
+applyCSSVariables();
+
+document.title =
+    cloak.title || "Veil";
+
+if (cloak.icon) {
+
+    document.getElementById(
+        "favicon"
+    ).href = cloak.icon;
+}
+
+render();
+</script>
+
+</body>
+</html>
