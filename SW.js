@@ -33,82 +33,78 @@ self.__scramjet$config = {
 };
 
 let scramjet = null;
-let scramjetReady = null;
+let initError = null;
 
 try {
     importScripts(SCRAMJET_ALL);
 
     if (typeof $scramjetLoadWorker !== "function") {
         throw new Error(
-            "S/SA.js loaded, but $scramjetLoadWorker() was not found."
+            "S/SA.js loaded, but $scramjetLoadWorker() is not available. " +
+            "The Scramjet bundle and SW.js are incompatible."
         );
     }
 
-    const workerAPI = $scramjetLoadWorker();
+    const worker = $scramjetLoadWorker();
 
     if (
-        !workerAPI ||
-        typeof workerAPI.ScramjetServiceWorker !== "function"
+        !worker ||
+        typeof worker.ScramjetServiceWorker !== "function"
     ) {
         throw new Error(
-            "S/SA.js loaded, but ScramjetServiceWorker was not exposed by $scramjetLoadWorker()."
+            "$scramjetLoadWorker() ran, but ScramjetServiceWorker " +
+            "was not returned."
         );
     }
 
-    const ScramjetServiceWorker =
-        workerAPI.ScramjetServiceWorker;
-
-    scramjet = new ScramjetServiceWorker();
-
-    scramjetReady = Promise.resolve(
-        typeof scramjet.loadConfig === "function"
-            ? scramjet.loadConfig()
-            : undefined
-    );
+    scramjet = new worker.ScramjetServiceWorker();
 
     console.log(
-        "Veil: Scramjet service worker initialized."
+        "Veil: ScramjetServiceWorker initialized."
     );
 
 } catch (error) {
 
+    initError = error;
+
     console.error(
-        "Veil: Scramjet service worker initialization failed.",
+        "Veil: Scramjet service worker failed to initialize.",
         error
     );
-
-    scramjet = null;
-
-    scramjetReady = Promise.reject(error);
-
-    scramjetReady.catch(() => {});
 }
 
 self.addEventListener("install", event => {
-    console.log("Veil: service worker installed.");
-    self.skipWaiting();
+    console.log("Veil: SW installed.");
+    event.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener("activate", event => {
-    event.waitUntil(
-        self.clients.claim()
-    );
+    console.log("Veil: SW activated.");
+    event.waitUntil(self.clients.claim());
 });
 
 self.addEventListener("fetch", event => {
 
     if (!scramjet) {
+        if (initError) {
+            console.error(
+                "Veil: proxy unavailable:",
+                initError
+            );
+        }
+
         return;
     }
 
-    const requestURL = new URL(
+    const url = new URL(
         event.request.url
     );
 
-    if (
-        requestURL.origin !== self.location.origin ||
-        !requestURL.pathname.startsWith(PREFIX)
-    ) {
+    if (url.origin !== self.location.origin) {
+        return;
+    }
+
+    if (!url.pathname.startsWith(PREFIX)) {
         return;
     }
 
@@ -117,7 +113,11 @@ self.addEventListener("fetch", event => {
 
             try {
 
-                await scramjetReady;
+                if (
+                    typeof scramjet.loadConfig === "function"
+                ) {
+                    await scramjet.loadConfig();
+                }
 
                 if (
                     typeof scramjet.route === "function" &&
@@ -136,8 +136,7 @@ self.addEventListener("fetch", event => {
                 );
 
                 return new Response(
-                    "Veil could not proxy this request.\n\n" +
-                    "Scramjet error: " +
+                    "Veil Scramjet error: " +
                     (error?.message || String(error)),
                     {
                         status: 502,
