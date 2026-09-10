@@ -956,6 +956,18 @@ input:focus{
     width:32px;
   }
 }
+
+.adblock-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid var(--border);background:var(--bg2);border-radius:9px;}
+.adblock-info{min-width:0;}
+.adblock-name{font-size:12px;}
+.adblock-description{font-size:10px;color:var(--muted);margin-top:4px;line-height:1.5;}
+.adblock-state{font-size:10px;color:var(--muted);margin-top:3px;}
+.toggle{position:relative;width:42px;height:24px;flex:0 0 42px;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-track{position:absolute;inset:0;border-radius:20px;background:var(--bg3);border:1px solid var(--border);cursor:pointer;transition:.15s;}
+.toggle-track:before{content:"";position:absolute;width:18px;height:18px;left:2px;top:2px;border-radius:50%;background:var(--muted);transition:.15s;}
+.toggle input:checked + .toggle-track{background:var(--accent);border-color:var(--accent);}
+.toggle input:checked + .toggle-track:before{transform:translateX(18px);background:var(--accentText);}
 </style>
 </head>
 
@@ -1200,6 +1212,24 @@ input:focus{
 
     <section class="setting-section">
 
+      <div class="setting-title">Privacy</div>
+
+      <div class="adblock-row">
+        <div class="adblock-info">
+          <div class="adblock-name">Ad blocking</div>
+          <div class="adblock-description">Block common advertising and tracking requests through the Veil service worker.</div>
+          <div class="adblock-state" id="adBlockState">Disabled</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="adBlockToggle">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+
+    </section>
+
+    <section class="setting-section">
+
       <div class="setting-title">Connection</div>
 
       <div class="status checking" id="engineStatus">
@@ -1236,2283 +1266,307 @@ input:focus{
 <script>
 "use strict";
 
-/* ---------------------------------------------------------
-   VEIL SETTINGS
---------------------------------------------------------- */
-
 const THEMES = {
-
-  matte:{
-    bg:"#101010",
-    bg2:"#151515",
-    bg3:"#1b1b1b",
-    panel:"#181818",
-    panel2:"#202020",
-    border:"#2b2b2b",
-    text:"#f2f2f2",
-    muted:"#888888",
-    accent:"#ffffff",
-    accentText:"#111111",
-    newtab:"#101010"
-  },
-
-  sakura:{
-    bg:"#190e14",
-    bg2:"#21111a",
-    bg3:"#321725",
-    panel:"#28131e",
-    panel2:"#3a1b29",
-    border:"#512538",
-    text:"#fff0f6",
-    muted:"#b991a3",
-    accent:"#ff8fba",
-    accentText:"#250b16",
-    newtab:"#190e14"
-  },
-
-  forest:{
-    bg:"#0b140e",
-    bg2:"#101b13",
-    bg3:"#17291b",
-    panel:"#132219",
-    panel2:"#1b3020",
-    border:"#29452f",
-    text:"#effff1",
-    muted:"#8da993",
-    accent:"#73c982",
-    accentText:"#071109",
-    newtab:"#0b140e"
-  },
-
-  twilight:{
-    bg:"#110d1a",
-    bg2:"#171122",
-    bg3:"#241936",
-    panel:"#1c142b",
-    panel2:"#2b1d40",
-    border:"#412c5c",
-    text:"#f7f0ff",
-    muted:"#a89ab8",
-    accent:"#b88cff",
-    accentText:"#160c24",
-    newtab:"#110d1a"
-  },
-
-  sunlight:{
-    bg:"#191108",
-    bg2:"#211609",
-    bg3:"#32200c",
-    panel:"#281a0a",
-    panel2:"#3a250e",
-    border:"#513716",
-    text:"#fff8eb",
-    muted:"#bca783",
-    accent:"#ffb84d",
-    accentText:"#241303",
-    newtab:"#191108"
-  },
-
-  midnight:{
-    bg:"#080b12",
-    bg2:"#0d111b",
-    bg3:"#121827",
-    panel:"#101521",
-    panel2:"#171e2d",
-    border:"#263047",
-    text:"#eef3ff",
-    muted:"#8490a7",
-    accent:"#7aa2ff",
-    accentText:"#08101f",
-    newtab:"#080b12"
-  }
-
+  matte:{bg:"#101010",bg2:"#151515",bg3:"#1b1b1b",panel:"#181818",panel2:"#202020",border:"#2b2b2b",text:"#f2f2f2",muted:"#888888",accent:"#ffffff",accentText:"#111111",newtab:"#101010"},
+  sakura:{bg:"#190e14",bg2:"#21111a",bg3:"#321725",panel:"#28131e",panel2:"#3a1b29",border:"#512538",text:"#fff0f6",muted:"#b991a3",accent:"#ff8fba",accentText:"#250b16",newtab:"#190e14"},
+  forest:{bg:"#0b140e",bg2:"#101b13",bg3:"#17291b",panel:"#132219",panel2:"#1b3020",border:"#29452f",text:"#effff1",muted:"#8da993",accent:"#73c982",accentText:"#071109",newtab:"#0b140e"},
+  twilight:{bg:"#110d1a",bg2:"#171122",bg3:"#241936",panel:"#1c142b",panel2:"#2b1d40",border:"#412c5c",text:"#f7f0ff",muted:"#a89ab8",accent:"#b88cff",accentText:"#160c24",newtab:"#110d1a"},
+  sunlight:{bg:"#191108",bg2:"#211609",bg3:"#32200c",panel:"#281a0a",panel2:"#3a250e",border:"#513716",text:"#fff8eb",muted:"#bca783",accent:"#ffb84d",accentText:"#241303",newtab:"#191108"},
+  midnight:{bg:"#080b12",bg2:"#0d111b",bg3:"#121827",panel:"#101521",panel2:"#171e2d",border:"#263047",text:"#eef3ff",muted:"#8490a7",accent:"#7aa2ff",accentText:"#08101f",newtab:"#080b12"}
 };
 
-const DEFAULT_SETTINGS = {
-  theme:"matte",
-  ...THEMES.matte,
-  backgroundUrl:""
-};
+const DEFAULT_SETTINGS = {theme:"matte",...THEMES.matte,backgroundUrl:""};
+let settings={...DEFAULT_SETTINGS};
+let bookmarks=[];
+let cloak={title:"Veil",icon:""};
+let tabs=[];
+let activeTabId=null;
+let tabCounter=0;
 
-let settings = {...DEFAULT_SETTINGS};
+const STORAGE={bookmarks:"veil_bookmarks",settings:"veil_settings",cloak:"veil_cloak"};
+const AD_BLOCK_KEY="veil-adblock";
+const FAVICON="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23101010'/%3E%3Cpath d='M50 15L80 28V48C80 69 67 84 50 90C33 84 20 69 20 48V28L50 15Z' fill='none' stroke='%23fff' stroke-width='7'/%3E%3C/svg%3E";
 
-let bookmarks = [];
-
-let cloak = {
-  title:"Veil",
-  icon:""
-};
-
-let tabs = [];
-
-let activeTabId = null;
-
-let tabCounter = 0;
-
-const COOKIE = {
-
+const COOKIE={
   consent:false,
-
   set(name,value,days=365){
-
-    if(!this.consent) return;
-
-    const expires =
-      new Date(Date.now() + days * 86400000).toUTCString();
-
-    document.cookie =
-      encodeURIComponent(name) +
-      "=" +
-      encodeURIComponent(value) +
-      "; expires=" +
-      expires +
-      "; path=/; SameSite=Lax";
+    if(!this.consent)return;
+    const expires=new Date(Date.now()+days*86400000).toUTCString();
+    document.cookie=encodeURIComponent(name)+"="+encodeURIComponent(value)+"; expires="+expires+"; path=/; SameSite=Lax";
   },
-
   get(name){
-
-    const target = encodeURIComponent(name) + "=";
-
+    const target=encodeURIComponent(name)+"=";
     for(const part of document.cookie.split(";")){
-
-      const p = part.trim();
-
-      if(p.startsWith(target)){
-        return decodeURIComponent(
-          p.slice(target.length)
-        );
-      }
-
+      const p=part.trim();
+      if(p.startsWith(target))return decodeURIComponent(p.slice(target.length));
     }
-
     return null;
   }
-
 };
 
-const STORAGE = {
-  bookmarks:"veil_bookmarks",
-  settings:"veil_settings",
-  cloak:"veil_cloak"
-};
-
-/* ---------------------------------------------------------
-   HELPERS
---------------------------------------------------------- */
-
-function uid(){
-
-  return (
-    "tab_" +
-    Date.now().toString(36) +
-    "_" +
-    (++tabCounter).toString(36)
-  );
-
-}
-
-function escapeHTML(value){
-
-  return String(value ?? "").replace(
-    /[&<>"']/g,
-    match => ({
-      "&":"&amp;",
-      "<":"&lt;",
-      ">":"&gt;",
-      '"':"&quot;",
-      "'":"&#039;"
-    }[match])
-  );
-
-}
-
-function getTab(id=activeTabId){
-
-  return tabs.find(tab => tab.id === id) || null;
-
-}
-
-function getActiveTab(){
-
-  return getTab();
-
-}
-
-function isBookmarked(url){
-
-  return bookmarks.some(
-    bookmark => bookmark.url === url
-  );
-
-}
-
-/* ---------------------------------------------------------
-   STORAGE
---------------------------------------------------------- */
+function uid(){return "tab_"+Date.now().toString(36)+"_"+(++tabCounter).toString(36);}
+function escapeHTML(value){return String(value??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));}
+function getTab(id=activeTabId){return tabs.find(tab=>tab.id===id)||null;}
+function getActiveTab(){return getTab();}
+function isBookmarked(url){return bookmarks.some(b=>b.url===url);}
 
 function save(){
-
-  if(!COOKIE.consent) return;
-
+  if(!COOKIE.consent)return;
   try{
-
-    COOKIE.set(
-      STORAGE.bookmarks,
-      JSON.stringify(bookmarks)
-    );
-
-    COOKIE.set(
-      STORAGE.settings,
-      JSON.stringify(settings)
-    );
-
-    COOKIE.set(
-      STORAGE.cloak,
-      JSON.stringify(cloak)
-    );
-
-  }catch(error){
-
-    console.warn(
-      "Veil could not save settings:",
-      error
-    );
-
-  }
-
+    COOKIE.set(STORAGE.bookmarks,JSON.stringify(bookmarks));
+    COOKIE.set(STORAGE.settings,JSON.stringify(settings));
+    COOKIE.set(STORAGE.cloak,JSON.stringify(cloak));
+  }catch(error){console.warn("Veil could not save settings:",error);}
 }
 
 function loadSavedData(){
-
   try{
-
-    const savedBookmarks =
-      COOKIE.get(STORAGE.bookmarks);
-
-    const savedSettings =
-      COOKIE.get(STORAGE.settings);
-
-    const savedCloak =
-      COOKIE.get(STORAGE.cloak);
-
-    if(savedBookmarks){
-      bookmarks =
-        JSON.parse(savedBookmarks) || [];
-    }
-
-    if(savedSettings){
-
-      settings = {
-        ...DEFAULT_SETTINGS,
-        ...JSON.parse(savedSettings)
-      };
-
-    }
-
-    if(savedCloak){
-
-      cloak = {
-        ...cloak,
-        ...JSON.parse(savedCloak)
-      };
-
-    }
-
-  }catch(error){
-
-    console.warn(
-      "Veil saved data could not be loaded:",
-      error
-    );
-
-  }
-
+    const b=COOKIE.get(STORAGE.bookmarks),s=COOKIE.get(STORAGE.settings),c=COOKIE.get(STORAGE.cloak);
+    if(b)bookmarks=JSON.parse(b)||[];
+    if(s)settings={...DEFAULT_SETTINGS,...JSON.parse(s)};
+    if(c)cloak={...cloak,...JSON.parse(c)};
+  }catch(error){console.warn("Veil saved data could not be loaded:",error);}
 }
 
-/* ---------------------------------------------------------
-   APPEARANCE
---------------------------------------------------------- */
-
 function applyCSSVariables(){
-
-  const root =
-    document.documentElement;
-
-  const variables = [
-    "bg",
-    "bg2",
-    "bg3",
-    "panel",
-    "panel2",
-    "border",
-    "text",
-    "muted",
-    "accent",
-    "accentText",
-    "newtab"
-  ];
-
-  variables.forEach(name => {
-
-    root.style.setProperty(
-      "--" + name,
-      settings[name]
-    );
-
-  });
-
+  const root=document.documentElement;
+  ["bg","bg2","bg3","panel","panel2","border","text","muted","accent","accentText","newtab"].forEach(name=>root.style.setProperty("--"+name,settings[name]));
 }
 
 function applyNewTabBackground(){
-
-  document
-    .querySelectorAll(".newtab-page")
-    .forEach(element => {
-
-      if(settings.backgroundUrl){
-
-        const safeUrl =
-          settings.backgroundUrl
-            .replace(/"/g,"%22");
-
-        element.style.backgroundImage =
-          `url("${safeUrl}")`;
-
-      }else{
-
-        element.style.backgroundImage =
-          "none";
-
-      }
-
-    });
-
+  document.querySelectorAll(".newtab-page").forEach(el=>{
+    el.style.backgroundImage=settings.backgroundUrl?`url("${settings.backgroundUrl.replace(/"/g,"%22")}")`:"none";
+  });
 }
 
-/* ---------------------------------------------------------
-   VEIL ICON
---------------------------------------------------------- */
-
-function tabIcon(){
-
-  return `
-    <svg
-      viewBox="0 0 100 100"
-      fill="none"
-      aria-hidden="true"
-    >
-      <path
-        d="M50 14L81 27V47C81 69 68 84 50 91C32 84 19 69 19 47V27L50 14Z"
-        stroke="currentColor"
-        stroke-width="8"
-        stroke-linejoin="round"
-      />
-    </svg>
-  `;
-
-}
-
-/* ---------------------------------------------------------
-   URL HANDLING
---------------------------------------------------------- */
+function tabIcon(){return `<svg viewBox="0 0 100 100" fill="none" aria-hidden="true"><path d="M50 14L81 27V47C81 69 68 84 50 91C32 84 19 69 19 47V27L50 14Z" stroke="currentColor" stroke-width="8" stroke-linejoin="round"/></svg>`;}
 
 function normalizeUrl(input){
-
-  let value =
-    String(input || "").trim();
-
-  if(!value){
-    return null;
-  }
-
-  if(/^https?:\/\//i.test(value)){
-    return value;
-  }
-
-  if(/^[a-z][a-z0-9+.-]*:/i.test(value)){
-    return value;
-  }
-
-  if(
-    /^[\w.-]+\.[a-z]{2,}(\/.*)?$/i.test(value)
-  ){
-
-    return "https://" + value;
-
-  }
-
-  return (
-    "https://www.google.com/search?q=" +
-    encodeURIComponent(value)
-  );
-
+  let value=String(input||"").trim();
+  if(!value)return null;
+  if(/^https?:\/\//i.test(value))return value;
+  if(/^[a-z][a-z0-9+.-]*:/i.test(value))return value;
+  if(/^[\w.-]+\.[a-z]{2,}(\/.*)?$/i.test(value))return "https://"+value;
+  return "https://www.google.com/search?q="+encodeURIComponent(value);
 }
-
-/* ---------------------------------------------------------
-   ENGINE STATUS
---------------------------------------------------------- */
 
 function setEngineStatus(message,type="checking"){
-
-  const status =
-    document.getElementById("engineStatus");
-
-  if(!status) return;
-
-  status.textContent = message;
-
-  status.classList.remove(
-    "ready",
-    "error",
-    "checking"
-  );
-
+  const status=document.getElementById("engineStatus");
+  if(!status)return;
+  status.textContent=message;
+  status.classList.remove("ready","error","checking");
   status.classList.add(type);
-
 }
-
-/* ---------------------------------------------------------
-   ENGINE ERROR SCREEN
---------------------------------------------------------- */
 
 function showEngineError(wrapper,error){
-
-  const message =
-    error && error.message
-      ? error.message
-      : String(error || "Unknown error");
-
-  wrapper.innerHTML = `
-
-    <div class="engine-error">
-
-      <div class="engine-error-box">
-
-        <div class="engine-error-icon">
-          !
-        </div>
-
-        <h2>
-          Veil browser engine unavailable
-        </h2>
-
-        <p>
-          The Veil interface loaded correctly, but
-          <b>SC.js</b> could not initialize the local
-          Scramjet browser engine.
-        </p>
-
-        <p>
-          This is an engine initialization problem,
-          not a problem with the website you tried to open.
-        </p>
-
-        <div class="engine-error-details">
-          ${escapeHTML(message)}
-        </div>
-
-        <div class="engine-error-actions">
-
-          <button
-            class="engine-retry"
-            data-retry-engine
-          >
-            Retry
-          </button>
-
-          <button
-            class="engine-home"
-            data-engine-home
-          >
-            New tab
-          </button>
-
-        </div>
-
-      </div>
-
-    </div>
-
-  `;
-
-  const retry =
-    wrapper.querySelector(
-      "[data-retry-engine]"
-    );
-
-  const home =
-    wrapper.querySelector(
-      "[data-engine-home]"
-    );
-
-  if(retry){
-
-    retry.onclick = () => {
-
-      if(
-        window.VeilEngine &&
-        typeof window.VeilEngine.reset === "function"
-      ){
-
-        window.VeilEngine.reset();
-
-      }
-
-      renderViewport();
-
-    };
-
-  }
-
-  if(home){
-
-    home.onclick = () => {
-
-      const page =
-        getTab();
-
-      if(!page) return;
-
-      page.newTab = true;
-      page.url = "";
-      page.history = [];
-      page.historyIndex = -1;
-
-      render();
-
-    };
-
-  }
-
+  const message=error&&error.message?error.message:String(error||"Unknown error");
+  wrapper.innerHTML=`<div class="engine-error"><div class="engine-error-box"><div class="engine-error-icon">!</div><h2>Veil browser engine unavailable</h2><p>The Veil interface loaded correctly, but <b>SC.js</b> could not initialize the local Scramjet browser engine.</p><p>This is an engine initialization problem, not a problem with the website you tried to open.</p><div class="engine-error-details">${escapeHTML(message)}</div><div class="engine-error-actions"><button class="engine-retry" data-retry-engine>Retry</button><button class="engine-home" data-engine-home>New tab</button></div></div></div>`;
+  wrapper.querySelector("[data-retry-engine]")?.addEventListener("click",()=>{window.VeilEngine?.reset?.();renderViewport();});
+  wrapper.querySelector("[data-engine-home]")?.addEventListener("click",()=>{const page=getActiveTab();if(!page)return;page.newTab=true;page.url="";page.history=[];page.historyIndex=-1;render();});
 }
-
-/* ---------------------------------------------------------
-   ENGINE FRAME
---------------------------------------------------------- */
 
 async function createEngineFrame(page,wrapper){
-
   try{
-
-    if(
-      !window.VeilEngine ||
-      typeof window.VeilEngine.init !== "function"
-    ){
-
-      throw new Error(
-        "SC.js did not load. Expected window.VeilEngine."
-      );
-
-    }
-
-    setEngineStatus(
-      "Initializing local Scramjet engine…",
-      "checking"
-    );
-
+    if(!window.VeilEngine||typeof window.VeilEngine.init!=="function")throw new Error("sc.js did not load. Expected window.VeilEngine.");
+    setEngineStatus("Initializing local Scramjet engine…","checking");
     await window.VeilEngine.init();
+    setEngineStatus("Ready • local engine initialized","ready");
+    if(typeof window.VeilEngine.createFrame!=="function")throw new Error("sc.js loaded, but VeilEngine.createFrame() is unavailable.");
 
-    setEngineStatus(
-      "Ready • local engine initialized",
-      "ready"
-    );
+    const frameObj=await window.VeilEngine.createFrame();
+    if(!frameObj)throw new Error("Scramjet returned an empty browser frame.");
 
-    if(
-      typeof window.VeilEngine.createFrame !==
-      "function"
-    ){
-
-      throw new Error(
-        "SC.js loaded, but VeilEngine.createFrame() is unavailable."
-      );
-
-    }
-
-    const frameObj =
-      await window.VeilEngine.createFrame();
-
-    if(!frameObj){
-
-      throw new Error(
-        "Scramjet returned an empty browser frame."
-      );
-
-    }
-
-    const frame =
-      frameObj.element || frameObj;
-
-    if(!(frame instanceof HTMLElement)){
-
-      throw new Error(
-        "Scramjet returned an invalid frame element."
-      );
-
-    }
+    const frame=frameObj.frame||frameObj.element||frameObj;
+    if(!(frame instanceof HTMLElement))throw new Error("Scramjet returned an invalid frame element.");
 
     frame.classList.add("engine-frame");
+    frame.dataset.tabId=page.id;
+    wrapper.replaceChildren(frame);
+    page.engineFrame=frameObj;
 
-    frame.dataset.tabId =
-      page.id;
-
-    wrapper.appendChild(frame);
-
-    page.engineFrame =
-      frameObj;
-
-    if(
-      typeof frameObj.go ===
-      "function"
-    ){
-
-      await frameObj.go(page.url);
-
-    }else if(
-      typeof frameObj.navigate ===
-      "function"
-    ){
-
-      await frameObj.navigate(page.url);
-
-    }else{
-
-      throw new Error(
-        "The Scramjet frame does not provide a navigation method."
-      );
-
-    }
-
+    if(page.url&&typeof frameObj.go==="function")await frameObj.go(page.url);
+    else if(page.url&&typeof frameObj.navigate==="function")await frameObj.navigate(page.url);
   }catch(error){
-
-    console.error(
-      "Veil engine error:",
-      error
-    );
-
-    setEngineStatus(
-      "Engine error • see the browser page for details",
-      "error"
-    );
-
-    showEngineError(
-      wrapper,
-      error
-    );
-
+    console.error("Veil engine error:",error);
+    setEngineStatus("Engine error • see the browser page for details","error");
+    showEngineError(wrapper,error);
   }
-
 }
-
-/* ---------------------------------------------------------
-   TABS
---------------------------------------------------------- */
 
 function renderTabs(){
-
-  const container =
-    document.getElementById("tabs");
-
-  container.innerHTML =
-    tabs.map(tab => `
-
-      <div
-        class="tab ${
-          tab.id === activeTabId
-            ? "active "
-            : ""
-        }${
-          tab.animOpen
-            ? "opening"
-            : ""
-        }"
-        data-tab-id="${escapeHTML(tab.id)}"
-      >
-
-        <div class="tab-icon">
-          ${tabIcon()}
-        </div>
-
-        <div class="tab-title">
-          ${escapeHTML(tab.title)}
-        </div>
-
-        <button
-          class="tab-close"
-          data-close="${escapeHTML(tab.id)}"
-          aria-label="Close tab"
-        >
-          ×
-        </button>
-
-      </div>
-
-    `).join("");
-
-  tabs.forEach(tab => {
-    tab.animOpen = false;
+  const container=document.getElementById("tabs");
+  container.innerHTML=tabs.map(tab=>`<div class="tab ${tab.id===activeTabId?"active ":""}${tab.animOpen?"opening":""}" data-tab-id="${escapeHTML(tab.id)}"><div class="tab-icon">${tabIcon()}</div><div class="tab-title">${escapeHTML(tab.title)}</div><button class="tab-close" data-close="${escapeHTML(tab.id)}" aria-label="Close tab">×</button></div>`).join("");
+  tabs.forEach(tab=>tab.animOpen=false);
+  container.querySelectorAll(".tab").forEach(el=>{
+    el.addEventListener("click",e=>{if(e.target.closest(".tab-close"))return;activeTabId=el.dataset.tabId;render();});
+    el.addEventListener("dblclick",e=>{if(!e.target.closest(".tab-close"))renameCurrentTab(el.dataset.tabId);});
   });
-
-  container
-    .querySelectorAll(".tab")
-    .forEach(element => {
-
-      element.addEventListener(
-        "click",
-        event => {
-
-          if(
-            event.target.closest(".tab-close")
-          ){
-            return;
-          }
-
-          activeTabId =
-            element.dataset.tabId;
-
-          render();
-
-        }
-      );
-
-      element.addEventListener(
-        "dblclick",
-        event => {
-
-          if(
-            !event.target.closest(".tab-close")
-          ){
-
-            renameCurrentTab(
-              element.dataset.tabId
-            );
-
-          }
-
-        }
-      );
-
-    });
-
-  container
-    .querySelectorAll("[data-close]")
-    .forEach(button => {
-
-      button.addEventListener(
-        "click",
-        event => {
-
-          event.stopPropagation();
-
-          closeTab(
-            button.dataset.close
-          );
-
-        }
-      );
-
-    });
-
+  container.querySelectorAll("[data-close]").forEach(btn=>btn.addEventListener("click",e=>{e.stopPropagation();closeTab(btn.dataset.close);}));
 }
-
-/* ---------------------------------------------------------
-   VIEWPORT
---------------------------------------------------------- */
 
 function renderViewport(){
-
-  const viewport =
-    document.getElementById("viewport");
-
-  viewport.innerHTML = "";
-
-  tabs.forEach(page => {
-
-    const wrapper =
-      document.createElement("section");
-
-    wrapper.className =
-      "page" +
-      (
-        page.id === activeTabId
-          ? " active"
-          : ""
-      );
-
-    wrapper.dataset.pageId =
-      page.id;
-
+  const viewport=document.getElementById("viewport");
+  viewport.innerHTML="";
+  tabs.forEach(page=>{
+    const wrapper=document.createElement("section");
+    wrapper.className="page"+(page.id===activeTabId?" active":"");
+    wrapper.dataset.pageId=page.id;
     if(page.newTab){
-
-      wrapper.innerHTML = `
-
-        <div class="newtab-page">
-
-          <div class="newtab-overlay">
-
-            <div class="newtab-center">
-
-              <div class="veil-mark">
-                ${tabIcon()}
-              </div>
-
-              <div class="newtab-title">
-                Veil
-              </div>
-
-              <div class="newtab-subtitle">
-                A clean, private browsing interface
-              </div>
-
-              <div class="search-box">
-
-                <span>⌕</span>
-
-                <input
-                  class="newtab-search"
-                  data-page="${escapeHTML(page.id)}"
-                  placeholder="Search or enter address"
-                  autocomplete="off"
-                  spellcheck="false"
-                >
-
-              </div>
-
-              <div class="quick-links">
-
-                <button
-                  class="quick-link"
-                  data-url="https://www.google.com"
-                >
-                  Google
-                </button>
-
-                <button
-                  class="quick-link"
-                  data-url="https://www.youtube.com"
-                >
-                  YouTube
-                </button>
-
-                <button
-                  class="quick-link"
-                  data-action="bookmarks"
-                >
-                  Bookmarks
-                </button>
-
-                <button
-                  class="quick-link"
-                  data-action="settings"
-                >
-                  Settings
-                </button>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      `;
-
+      wrapper.innerHTML=`<div class="newtab-page"><div class="newtab-overlay"><div class="newtab-center"><div class="veil-mark">${tabIcon()}</div><div class="newtab-title">Veil</div><div class="newtab-subtitle">A clean, private browsing interface</div><div class="search-box"><span>⌕</span><input class="newtab-search" data-page="${escapeHTML(page.id)}" placeholder="Search or enter address" autocomplete="off" spellcheck="false"></div><div class="quick-links"><button class="quick-link" data-url="https://www.google.com">Google</button><button class="quick-link" data-url="https://www.youtube.com">YouTube</button><button class="quick-link" data-action="bookmarks">Bookmarks</button><button class="quick-link" data-action="settings">Settings</button></div></div></div></div>`;
     }else{
-
-      const frameContainer =
-        document.createElement("div");
-
-      frameContainer.style.width =
-        "100%";
-
-      frameContainer.style.height =
-        "100%";
-
-      frameContainer.dataset.engineContainer =
-        page.id;
-
-      wrapper.appendChild(
-        frameContainer
-      );
-
-      createEngineFrame(
-        page,
-        frameContainer
-      );
-
+      const frameContainer=document.createElement("div");
+      frameContainer.style.width="100%";frameContainer.style.height="100%";frameContainer.dataset.engineContainer=page.id;
+      wrapper.appendChild(frameContainer);
+      createEngineFrame(page,frameContainer);
     }
-
     viewport.appendChild(wrapper);
-
   });
-
   applyNewTabBackground();
-
-  viewport
-    .querySelectorAll(".newtab-search")
-    .forEach(input => {
-
-      input.addEventListener(
-        "keydown",
-        event => {
-
-          if(event.key === "Enter"){
-
-            activeTabId =
-              input.dataset.page;
-
-            navigate(
-              input.value
-            );
-
-          }
-
-        }
-      );
-
-    });
-
-  viewport
-    .querySelectorAll(".quick-link")
-    .forEach(button => {
-
-      button.addEventListener(
-        "click",
-        () => {
-
-          const page =
-            button.closest(".page");
-
-          if(
-            button.dataset.url
-          ){
-
-            activeTabId =
-              page.dataset.pageId;
-
-            navigate(
-              button.dataset.url
-            );
-
-          }else if(
-            button.dataset.action ===
-            "bookmarks"
-          ){
-
-            openPanel(
-              "bookmarksPanel"
-            );
-
-          }else if(
-            button.dataset.action ===
-            "settings"
-          ){
-
-            openPanel(
-              "settingsPanel"
-            );
-
-          }
-
-        }
-      );
-
-    });
-
+  viewport.querySelectorAll(".newtab-search").forEach(input=>input.addEventListener("keydown",e=>{if(e.key==="Enter"){activeTabId=input.dataset.page;navigate(input.value);}}));
+  viewport.querySelectorAll(".quick-link").forEach(button=>button.addEventListener("click",()=>{
+    const page=button.closest(".page");
+    if(button.dataset.url){activeTabId=page.dataset.pageId;navigate(button.dataset.url);}
+    else if(button.dataset.action==="bookmarks")openPanel("bookmarksPanel");
+    else if(button.dataset.action==="settings")openPanel("settingsPanel");
+  }));
 }
-
-/* ---------------------------------------------------------
-   TOOLBAR
---------------------------------------------------------- */
 
 function renderToolbar(){
-
-  const page =
-    getActiveTab();
-
-  const address =
-    document.getElementById("address");
-
-  address.value =
-    page && page.url
-      ? page.url
-      : "";
-
-  document.getElementById(
-    "backBtn"
-  ).disabled =
-    !page ||
-    page.historyIndex <= 0;
-
-  document.getElementById(
-    "forwardBtn"
-  ).disabled =
-    !page ||
-    page.historyIndex >=
-    page.history.length - 1;
-
-  const bookmark =
-    document.getElementById(
-      "bookmarkBtn"
-    );
-
-  if(
-    page &&
-    page.url &&
-    isBookmarked(page.url)
-  ){
-
-    bookmark.classList.add("saved");
-    bookmark.textContent = "★";
-
-  }else{
-
-    bookmark.classList.remove("saved");
-    bookmark.textContent = "☆";
-
-  }
-
+  const page=getActiveTab(),address=document.getElementById("address");
+  address.value=page?.url||"";
+  document.getElementById("backBtn").disabled=!page||page.historyIndex<=0;
+  document.getElementById("forwardBtn").disabled=!page||page.historyIndex>=page.history.length-1;
+  const bookmark=document.getElementById("bookmarkBtn");
+  const saved=!!(page?.url&&isBookmarked(page.url));
+  bookmark.classList.toggle("saved",saved);bookmark.textContent=saved?"★":"☆";
 }
 
-/* ---------------------------------------------------------
-   MAIN RENDER
---------------------------------------------------------- */
-
-function render(){
-
-  renderTabs();
-  renderViewport();
-  renderToolbar();
-  renderBookmarks();
-  loadColorInputs();
-  loadCloakInputs();
-
-}
-
-/* ---------------------------------------------------------
-   NAVIGATION
---------------------------------------------------------- */
+function render(){renderTabs();renderViewport();renderToolbar();renderBookmarks();loadColorInputs();loadCloakInputs();loadAdBlockInput();}
 
 async function navigate(raw){
-
-  const page =
-    getActiveTab();
-
-  if(!page) return;
-
-  const value =
-    normalizeUrl(raw);
-
-  if(!value) return;
-
-  page.newTab = false;
-
-  if(
-    page.historyIndex <
-    page.history.length - 1
-  ){
-
-    page.history =
-      page.history.slice(
-        0,
-        page.historyIndex + 1
-      );
-
-  }
-
-  page.history.push(value);
-
-  page.historyIndex =
-    page.history.length - 1;
-
-  page.url = value;
-
-  try{
-
-    page.title =
-      new URL(value).hostname;
-
-  }catch{
-
-    page.title = "Veil";
-
-  }
-
+  const page=getActiveTab(),value=normalizeUrl(raw);if(!page||!value)return;
+  page.newTab=false;
+  if(page.historyIndex<page.history.length-1)page.history=page.history.slice(0,page.historyIndex+1);
+  page.history.push(value);page.historyIndex=page.history.length-1;page.url=value;
+  try{page.title=new URL(value).hostname||"Veil";}catch{page.title="Veil";}
   render();
-
 }
 
-async function goBack(){
-
-  const page =
-    getActiveTab();
-
-  if(
-    !page ||
-    page.historyIndex <= 0
-  ){
-
-    return;
-
-  }
-
-  page.historyIndex--;
-
-  page.url =
-    page.history[
-      page.historyIndex
-    ];
-
-  page.newTab = false;
-
-  render();
-
-  await navigateExisting(page);
-
-}
-
-async function goForward(){
-
-  const page =
-    getActiveTab();
-
-  if(
-    !page ||
-    page.historyIndex >=
-    page.history.length - 1
-  ){
-
-    return;
-
-  }
-
-  page.historyIndex++;
-
-  page.url =
-    page.history[
-      page.historyIndex
-    ];
-
-  page.newTab = false;
-
-  render();
-
-  await navigateExisting(page);
-
-}
-
-async function navigateExisting(page){
-
-  try{
-
-    if(
-      !window.VeilEngine ||
-      typeof window.VeilEngine.init !==
-      "function"
-    ){
-
-      throw new Error(
-        "VeilEngine is unavailable."
-      );
-
-    }
-
-    await window.VeilEngine.init();
-
-    if(
-      page.engineFrame &&
-      typeof page.engineFrame.go ===
-      "function"
-    ){
-
-      await page.engineFrame.go(
-        page.url
-      );
-
-      return;
-
-    }
-
-    const wrapper =
-      document.querySelector(
-        `[data-engine-container="${CSS.escape(page.id)}"]`
-      );
-
-    if(wrapper){
-
-      wrapper.innerHTML = "";
-
-      await createEngineFrame(
-        page,
-        wrapper
-      );
-
-    }
-
-  }catch(error){
-
-    console.error(error);
-
-  }
-
-}
+async function goBack(){const page=getActiveTab();if(!page||page.historyIndex<=0)return;page.historyIndex--;page.url=page.history[page.historyIndex];page.newTab=false;render();}
+async function goForward(){const page=getActiveTab();if(!page||page.historyIndex>=page.history.length-1)return;page.historyIndex++;page.url=page.history[page.historyIndex];page.newTab=false;render();}
 
 async function reload(){
-
-  const page =
-    getActiveTab();
-
-  if(!page || !page.url) return;
-
-  if(
-    page.engineFrame &&
-    typeof page.engineFrame.reload ===
-    "function"
-  ){
-
-    await page.engineFrame.reload();
-    return;
-
-  }
-
-  await navigateExisting(page);
-
+  const page=getActiveTab();if(!page||!page.url)return;
+  if(page.engineFrame&&typeof page.engineFrame.reload==="function"){await page.engineFrame.reload();return;}
+  renderViewport();
 }
 
-/* ---------------------------------------------------------
-   TAB CREATION
---------------------------------------------------------- */
-
 function createTab(newTab=true){
-
-  const tab = {
-
-    id:uid(),
-
-    title:newTab
-      ? "New Tab"
-      : "Veil",
-
-    url:"",
-
-    history:[],
-
-    historyIndex:-1,
-
-    newTab,
-
-    animOpen:true,
-
-    engineFrame:null
-
-  };
-
-  tabs.push(tab);
-
-  activeTabId =
-    tab.id;
-
-  render();
-
-  requestAnimationFrame(
-    () => {
-
-      const element =
-        document.querySelector(
-          `[data-tab-id="${CSS.escape(tab.id)}"]`
-        );
-
-      if(element){
-        element.classList.add(
-          "opening"
-        );
-      }
-
-    }
-  );
-
+  const tab={id:uid(),title:newTab?"New Tab":"Veil",url:"",history:[],historyIndex:-1,newTab,animOpen:true,engineFrame:null};
+  tabs.push(tab);activeTabId=tab.id;render();
 }
 
 function closeTab(id){
-
-  const index =
-    tabs.findIndex(
-      tab => tab.id === id
-    );
-
-  if(index < 0) return;
-
-  const element =
-    document.querySelector(
-      `[data-tab-id="${CSS.escape(id)}"]`
-    );
-
-  if(element){
-
-    element.classList.add(
-      "closing"
-    );
-
-    setTimeout(
-      () => finishClose(id),
-      160
-    );
-
-  }else{
-
-    finishClose(id);
-
-  }
-
+  const index=tabs.findIndex(tab=>tab.id===id);if(index<0)return;
+  const element=document.querySelector(`[data-tab-id="${CSS.escape(id)}"]`);
+  if(element){element.classList.add("closing");setTimeout(()=>finishClose(id),160);}else finishClose(id);
 }
-
 function finishClose(id){
-
-  const index =
-    tabs.findIndex(
-      tab => tab.id === id
-    );
-
-  if(index < 0) return;
-
+  const index=tabs.findIndex(tab=>tab.id===id);if(index<0)return;
   tabs.splice(index,1);
-
-  if(!tabs.length){
-
-    createTab(true);
-    return;
-
-  }
-
-  if(activeTabId === id){
-
-    const next =
-      tabs[
-        Math.min(
-          index,
-          tabs.length - 1
-        )
-      ];
-
-    activeTabId =
-      next.id;
-
-  }
-
+  if(!tabs.length){createTab(true);return;}
+  if(activeTabId===id)activeTabId=tabs[Math.min(index,tabs.length-1)].id;
   render();
-
 }
 
-/* ---------------------------------------------------------
-   TAB RENAME
---------------------------------------------------------- */
-
-function renameCurrentTab(
-  id=activeTabId
-){
-
-  const page =
-    getTab(id);
-
-  if(!page) return;
-
-  const name =
-    prompt(
-      "Enter a name for this tab:",
-      page.title
-    );
-
-  if(
-    name &&
-    name.trim()
-  ){
-
-    page.title =
-      name.trim();
-
-    render();
-
-  }
-
-}
-
-/* ---------------------------------------------------------
-   BOOKMARKS
---------------------------------------------------------- */
+function renameCurrentTab(id=activeTabId){const page=getTab(id);if(!page)return;const name=prompt("Enter a name for this tab:",page.title);if(name?.trim()){page.title=name.trim();render();}}
 
 function toggleBookmark(){
-
-  const page =
-    getActiveTab();
-
-  if(!page || !page.url) return;
-
-  const existing =
-    bookmarks.find(
-      bookmark =>
-        bookmark.url === page.url
-    );
-
-  if(existing){
-
-    bookmarks =
-      bookmarks.filter(
-        bookmark =>
-          bookmark.url !== page.url
-      );
-
-  }else{
-
-    bookmarks.push({
-      id:uid(),
-      title:page.title || page.url,
-      url:page.url
-    });
-
-  }
-
-  save();
-
-  render();
-
+  const page=getActiveTab();if(!page?.url)return;
+  const existing=bookmarks.find(b=>b.url===page.url);
+  if(existing)bookmarks=bookmarks.filter(b=>b.url!==page.url);
+  else bookmarks.push({id:uid(),title:page.title||page.url,url:page.url});
+  save();render();
 }
 
 function renderBookmarks(){
-
-  const list =
-    document.getElementById(
-      "bookmarkList"
-    );
-
-  if(!bookmarks.length){
-
-    list.innerHTML =
-      '<div class="empty">No bookmarks yet.</div>';
-
-    return;
-
-  }
-
-  list.innerHTML =
-    bookmarks.map(
-      bookmark => `
-
-        <div class="bookmark-row">
-
-          <div
-            class="bookmark-main"
-            data-open-bookmark="${escapeHTML(bookmark.url)}"
-          >
-
-            <div class="bookmark-title">
-              ${escapeHTML(bookmark.title)}
-            </div>
-
-            <div class="bookmark-url">
-              ${escapeHTML(bookmark.url)}
-            </div>
-
-          </div>
-
-          <button
-            class="bookmark-delete"
-            data-delete-bookmark="${escapeHTML(bookmark.id)}"
-          >
-            ×
-          </button>
-
-        </div>
-
-      `
-    ).join("");
-
-  list
-    .querySelectorAll(
-      "[data-open-bookmark]"
-    )
-    .forEach(element => {
-
-      element.onclick = () => {
-
-        const url =
-          element.dataset.openBookmark;
-
-        closePanels();
-
-        navigate(url);
-
-      };
-
-    });
-
-  list
-    .querySelectorAll(
-      "[data-delete-bookmark]"
-    )
-    .forEach(element => {
-
-      element.onclick = () => {
-
-        bookmarks =
-          bookmarks.filter(
-            bookmark =>
-              bookmark.id !==
-              element.dataset.deleteBookmark
-          );
-
-        save();
-
-        renderBookmarks();
-        renderToolbar();
-
-      };
-
-    });
-
+  const list=document.getElementById("bookmarkList");
+  if(!bookmarks.length){list.innerHTML='<div class="empty">No bookmarks yet.</div>';return;}
+  list.innerHTML=bookmarks.map(b=>`<div class="bookmark-row"><div class="bookmark-main" data-open-bookmark="${escapeHTML(b.url)}"><div class="bookmark-title">${escapeHTML(b.title)}</div><div class="bookmark-url">${escapeHTML(b.url)}</div></div><button class="bookmark-delete" data-delete-bookmark="${escapeHTML(b.id)}">×</button></div>`).join("");
+  list.querySelectorAll("[data-open-bookmark]").forEach(el=>el.onclick=()=>{const url=el.dataset.openBookmark;closePanels();navigate(url);});
+  list.querySelectorAll("[data-delete-bookmark]").forEach(el=>el.onclick=()=>{bookmarks=bookmarks.filter(b=>b.id!==el.dataset.deleteBookmark);save();renderBookmarks();renderToolbar();});
 }
 
-/* ---------------------------------------------------------
-   PANELS / MENU
---------------------------------------------------------- */
+function openPanel(id){closeMenu();document.getElementById("backdrop").classList.add("open");document.getElementById(id).classList.add("open");}
+function closePanels(){document.getElementById("backdrop").classList.remove("open");document.querySelectorAll(".panel").forEach(p=>p.classList.remove("open"));}
+function closeMenu(){document.getElementById("mainMenu").classList.remove("open");}
 
-function openPanel(id){
+function loadColorInputs(){document.getElementById("colorBg").value=settings.bg;document.getElementById("colorPanel").value=settings.panel;document.getElementById("colorAccent").value=settings.accent;document.getElementById("colorText").value=settings.text;}
+function loadCloakInputs(){document.getElementById("cloakTitle").value=cloak.title||"";document.getElementById("cloakIcon").value=cloak.icon||"";}
+function applyTheme(name){if(!THEMES[name])return;settings={...settings,...THEMES[name],theme:name};applyCSSVariables();save();render();}
+function applyCustomColors(){settings.bg=colorBg.value;settings.panel=colorPanel.value;settings.accent=colorAccent.value;settings.text=colorText.value;applyCSSVariables();save();render();}
+function applyBackground(){settings.backgroundUrl=document.getElementById("backgroundUrl").value.trim();save();render();}
+function applyCloak(){cloak.title=document.getElementById("cloakTitle").value.trim()||"Veil";cloak.icon=document.getElementById("cloakIcon").value.trim();document.title=cloak.title;document.getElementById("favicon").href=cloak.icon||FAVICON;save();}
+function resetSettings(){settings={...DEFAULT_SETTINGS};cloak={title:"Veil",icon:""};document.title="Veil";document.getElementById("favicon").href=FAVICON;applyCSSVariables();save();render();}
 
-  closeMenu();
-
-  document
-    .getElementById("backdrop")
-    .classList.add("open");
-
-  document
-    .getElementById(id)
-    .classList.add("open");
-
+function getAdBlock(){return localStorage.getItem(AD_BLOCK_KEY)==="true";}
+function loadAdBlockInput(){const input=document.getElementById("adBlockToggle");const label=document.getElementById("adBlockState");if(input)input.checked=getAdBlock();if(label)label.textContent=getAdBlock()?"Enabled":"Disabled";}
+function setAdBlock(enabled){
+  const value=!!enabled;
+  localStorage.setItem(AD_BLOCK_KEY,String(value));
+  window.VeilEngine?.setAdBlock?.(value);
+  loadAdBlockInput();
 }
 
-function closePanels(){
-
-  document
-    .getElementById("backdrop")
-    .classList.remove("open");
-
-  document
-    .querySelectorAll(".panel")
-    .forEach(panel => {
-
-      panel.classList.remove(
-        "open"
-      );
-
-    });
-
-}
-
-function closeMenu(){
-
-  document
-    .getElementById("mainMenu")
-    .classList.remove(
-      "open"
-    );
-
-}
-
-/* ---------------------------------------------------------
-   SETTINGS
---------------------------------------------------------- */
-
-function loadColorInputs(){
-
-  document.getElementById(
-    "colorBg"
-  ).value =
-    settings.bg;
-
-  document.getElementById(
-    "colorPanel"
-  ).value =
-    settings.panel;
-
-  document.getElementById(
-    "colorAccent"
-  ).value =
-    settings.accent;
-
-  document.getElementById(
-    "colorText"
-  ).value =
-    settings.text;
-
-}
-
-function loadCloakInputs(){
-
-  document.getElementById(
-    "cloakTitle"
-  ).value =
-    cloak.title || "";
-
-  document.getElementById(
-    "cloakIcon"
-  ).value =
-    cloak.icon || "";
-
-}
-
-function applyTheme(name){
-
-  if(!THEMES[name]) return;
-
-  settings = {
-    ...settings,
-    ...THEMES[name],
-    theme:name
-  };
-
-  applyCSSVariables();
-
-  save();
-
-  render();
-
-}
-
-function applyCustomColors(){
-
-  settings.bg =
-    document.getElementById(
-      "colorBg"
-    ).value;
-
-  settings.panel =
-    document.getElementById(
-      "colorPanel"
-    ).value;
-
-  settings.accent =
-    document.getElementById(
-      "colorAccent"
-    ).value;
-
-  settings.text =
-    document.getElementById(
-      "colorText"
-    ).value;
-
-  applyCSSVariables();
-
-  save();
-
-  render();
-
-}
-
-function applyBackground(){
-
-  settings.backgroundUrl =
-    document.getElementById(
-      "backgroundUrl"
-    ).value.trim();
-
-  save();
-
-  render();
-
-}
-
-function applyCloak(){
-
-  cloak.title =
-    document.getElementById(
-      "cloakTitle"
-    ).value.trim() ||
-    "Veil";
-
-  cloak.icon =
-    document.getElementById(
-      "cloakIcon"
-    ).value.trim();
-
-  document.title =
-    cloak.title;
-
-  if(cloak.icon){
-
-    document.getElementById(
-      "favicon"
-    ).href =
-      cloak.icon;
-
-  }
-
-  save();
-
-}
-
-function resetSettings(){
-
-  settings =
-    {...DEFAULT_SETTINGS};
-
-  cloak = {
-    title:"Veil",
-    icon:""
-  };
-
-  document.title =
-    "Veil";
-
-  document.getElementById(
-    "favicon"
-  ).href =
-    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23101010'/%3E%3Cpath d='M50 15L80 28V48C80 69 67 84 50 90C33 84 20 69 20 48V28L50 15Z' fill='none' stroke='%23fff' stroke-width='7'/%3E%3C/svg%3E";
-
-  applyCSSVariables();
-
-  save();
-
-  render();
-
-}
-
-/* ---------------------------------------------------------
-   EVENT HANDLERS
---------------------------------------------------------- */
-
-document.getElementById(
-  "newTabBtn"
-).onclick =
-  () => createTab(true);
-
-document.getElementById(
-  "backBtn"
-).onclick =
-  goBack;
-
-document.getElementById(
-  "forwardBtn"
-).onclick =
-  goForward;
-
-document.getElementById(
-  "refreshBtn"
-).onclick =
-  reload;
-
-document.getElementById(
-  "bookmarkBtn"
-).onclick =
-  toggleBookmark;
-
-document.getElementById(
-  "address"
-).addEventListener(
-  "keydown",
-  event => {
-
-    if(event.key === "Enter"){
-
-      navigate(
-        event.target.value
-      );
-
-    }
-
-  }
-);
-
-document.getElementById(
-  "menuBtn"
-).onclick =
-  event => {
-
-    event.stopPropagation();
-
-    document
-      .getElementById("mainMenu")
-      .classList.toggle("open");
-
-  };
-
-document.getElementById(
-  "menuNewTab"
-).onclick =
-  () => {
-
-    closeMenu();
-
-    createTab(true);
-
-  };
-
-document.getElementById(
-  "menuBookmark"
-).onclick =
-  () => {
-
-    toggleBookmark();
-
-    closeMenu();
-
-  };
-
-document.getElementById(
-  "menuBookmarks"
-).onclick =
-  () => openPanel(
-    "bookmarksPanel"
-  );
-
-document.getElementById(
-  "menuRename"
-).onclick =
-  () => {
-
-    closeMenu();
-
-    renameCurrentTab();
-
-  };
-
-document.getElementById(
-  "menuSettings"
-).onclick =
-  () => openPanel(
-    "settingsPanel"
-  );
-
-document.getElementById(
-  "backdrop"
-).onclick =
-  closePanels;
-
-document
-  .querySelectorAll(
-    "[data-close-panel]"
-  )
-  .forEach(button => {
-
-    button.onclick =
-      closePanels;
-
-  });
-
-document
-  .querySelectorAll(
-    "[data-theme]"
-  )
-  .forEach(button => {
-
-    button.onclick =
-      () => applyTheme(
-        button.dataset.theme
-      );
-
-  });
-
-document.getElementById(
-  "applyColors"
-).onclick =
-  applyCustomColors;
-
-document.getElementById(
-  "applyBackground"
-).onclick =
-  applyBackground;
-
-document.getElementById(
-  "applyCloak"
-).onclick =
-  applyCloak;
-
-document.getElementById(
-  "resetSettings"
-).onclick =
-  resetSettings;
-
-document.addEventListener(
-  "click",
-  event => {
-
-    if(
-      !event.target.closest(
-        "#mainMenu"
-      ) &&
-      !event.target.closest(
-        "#menuBtn"
-      )
-    ){
-
-      closeMenu();
-
-    }
-
-  }
-);
-
-/* ---------------------------------------------------------
-   KEYBOARD SHORTCUTS
---------------------------------------------------------- */
-
-document.addEventListener(
-  "keydown",
-  event => {
-
-    const modifier =
-      event.ctrlKey ||
-      event.metaKey;
-
-    if(
-      modifier &&
-      event.key.toLowerCase() === "l"
-    ){
-
-      event.preventDefault();
-
-      const address =
-        document.getElementById(
-          "address"
-        );
-
-      address.focus();
-      address.select();
-
-    }
-
-    if(
-      modifier &&
-      event.key.toLowerCase() === "t"
-    ){
-
-      event.preventDefault();
-
-      createTab(true);
-
-    }
-
-    if(
-      modifier &&
-      event.key.toLowerCase() === "w"
-    ){
-
-      event.preventDefault();
-
-      if(activeTabId){
-
-        closeTab(
-          activeTabId
-        );
-
-      }
-
-    }
-
-    if(
-      modifier &&
-      event.key.toLowerCase() === "d"
-    ){
-
-      event.preventDefault();
-
-      toggleBookmark();
-
-    }
-
-    if(
-      event.altKey &&
-      event.key === "ArrowLeft"
-    ){
-
-      event.preventDefault();
-
-      goBack();
-
-    }
-
-    if(
-      event.altKey &&
-      event.key === "ArrowRight"
-    ){
-
-      event.preventDefault();
-
-      goForward();
-
-    }
-
-    if(
-      modifier &&
-      event.key.toLowerCase() === "r"
-    ){
-
-      event.preventDefault();
-
-      reload();
-
-    }
-
-  }
-);
-
-window.addEventListener(
-  "beforeunload",
-  () => {
-
-    if(COOKIE.consent){
-
-      save();
-
-    }
-
-  }
-);
-
-/* ---------------------------------------------------------
-   COOKIE CONSENT
---------------------------------------------------------- */
+newTabBtn.onclick=()=>createTab(true);
+backBtn.onclick=goBack;forwardBtn.onclick=goForward;refreshBtn.onclick=reload;bookmarkBtn.onclick=toggleBookmark;
+address.addEventListener("keydown",e=>{if(e.key==="Enter")navigate(e.target.value);});
+menuBtn.onclick=e=>{e.stopPropagation();document.getElementById("mainMenu").classList.toggle("open");};
+menuNewTab.onclick=()=>{closeMenu();createTab(true);};
+menuBookmark.onclick=()=>{toggleBookmark();closeMenu();};
+menuBookmarks.onclick=()=>openPanel("bookmarksPanel");
+menuRename.onclick=()=>{closeMenu();renameCurrentTab();};
+menuSettings.onclick=()=>openPanel("settingsPanel");
+backdrop.onclick=closePanels;
+document.querySelectorAll("[data-close-panel]").forEach(b=>b.onclick=closePanels);
+document.querySelectorAll("[data-theme]").forEach(b=>b.onclick=()=>applyTheme(b.dataset.theme));
+applyColors.onclick=applyCustomColors;applyBackground.onclick=applyBackground;applyCloak.onclick=applyCloak;resetSettings.onclick=resetSettings;
+document.getElementById("adBlockToggle")?.addEventListener("change",e=>setAdBlock(e.target.checked));
+
+document.addEventListener("click",e=>{if(!e.target.closest("#mainMenu")&&!e.target.closest("#menuBtn"))closeMenu();});
+
+document.addEventListener("keydown",e=>{
+  const modifier=e.ctrlKey||e.metaKey,key=e.key.toLowerCase();
+  if(modifier&&key==="l"){e.preventDefault();address.focus();address.select();}
+  if(modifier&&key==="t"){e.preventDefault();createTab(true);}
+  if(modifier&&key==="w"){e.preventDefault();if(activeTabId)closeTab(activeTabId);}
+  if(modifier&&key==="d"){e.preventDefault();toggleBookmark();}
+  if(e.altKey&&e.key==="ArrowLeft"){e.preventDefault();goBack();}
+  if(e.altKey&&e.key==="ArrowRight"){e.preventDefault();goForward();}
+  if(modifier&&key==="r"){e.preventDefault();reload();}
+});
 
 function showCookieConsent(){
-
-  const overlay =
-    document.createElement("div");
-
-  overlay.className =
-    "cookie-overlay";
-
-  overlay.innerHTML = `
-
-    <div class="cookie-box">
-
-      <div class="cookie-logo">
-
-        <svg
-          viewBox="0 0 100 100"
-          fill="none"
-        >
-
-          <path
-            d="M50 12L82 26V47C82 69 68 85 50 91C32 85 18 69 18 47V26L50 12Z"
-            stroke="currentColor"
-            stroke-width="7"
-          />
-
-        </svg>
-
-      </div>
-
-      <h2>
-        Allow cookies?
-      </h2>
-
-      <p>
-        Veil can use cookies to remember
-        your bookmarks, appearance,
-        background, and other browser
-        preferences.
-        <br><br>
-        If you choose No, Veil will still
-        work, but nothing will be saved
-        between visits.
-      </p>
-
-      <div class="cookie-buttons">
-
-        <button
-          class="cookie-no"
-          id="cookieNo"
-        >
-          No
-        </button>
-
-        <button
-          class="cookie-yes"
-          id="cookieYes"
-        >
-          Yes
-        </button>
-
-      </div>
-
-    </div>
-
-  `;
-
-  document.body.appendChild(
-    overlay
-  );
-
-  document.getElementById(
-    "cookieYes"
-  ).onclick =
-    () => {
-
-      COOKIE.consent =
-        true;
-
-      COOKIE.set(
-        "veil_cookie_consent",
-        "yes"
-      );
-
-      loadSavedData();
-
-      save();
-
-      overlay.remove();
-
-      applyCSSVariables();
-
-      document.title =
-        cloak.title || "Veil";
-
-      if(cloak.icon){
-
-        document.getElementById(
-          "favicon"
-        ).href =
-          cloak.icon;
-
-      }
-
-      render();
-
-    };
-
-  document.getElementById(
-    "cookieNo"
-  ).onclick =
-    () => {
-
-      COOKIE.consent =
-        false;
-
-      overlay.remove();
-
-      render();
-
-    };
-
+  const overlay=document.createElement("div");overlay.className="cookie-overlay";
+  overlay.innerHTML=`<div class="cookie-box"><div class="cookie-logo"><svg viewBox="0 0 100 100" fill="none"><path d="M50 12L82 26V47C82 69 68 85 50 91C32 85 18 69 18 47V26L50 12Z" stroke="currentColor" stroke-width="7"/></svg></div><h2>Allow cookies?</h2><p>Veil can use cookies to remember your bookmarks, appearance, background, and other browser preferences.<br><br>If you choose No, Veil will still work, but nothing will be saved between visits.</p><div class="cookie-buttons"><button class="cookie-no" id="cookieNo">No</button><button class="cookie-yes" id="cookieYes">Yes</button></div></div>`;
+  document.body.appendChild(overlay);
+  cookieYes.onclick=()=>{COOKIE.consent=true;COOKIE.set("veil_cookie_consent","yes");loadSavedData();save();overlay.remove();applyCSSVariables();document.title=cloak.title||"Veil";document.getElementById("favicon").href=cloak.icon||FAVICON;render();};
+  cookieNo.onclick=()=>{COOKIE.consent=false;overlay.remove();render();};
 }
-
-/* ---------------------------------------------------------
-   LOAD SC.JS
---------------------------------------------------------- */
-
-function loadVeilEngineScript(){
-
-  return new Promise(
-    (resolve,reject) => {
-
-      if(
-        window.VeilEngine
-      ){
-
-        resolve();
-
-        return;
-
-      }
-
-      const script =
-        document.createElement(
-          "script"
-        );
-
-      script.src =
-        "./SC.js";
-
-      script.async =
-        false;
-
-      script.onload =
-        () => resolve();
-
-      script.onerror =
-        () => reject(
-          new Error(
-            "Could not load SC.js from the repository root. Expected: ./SC.js"
-          )
-        );
-
-      document.head.appendChild(
-        script
-      );
-
-    }
-  );
-
-}
-
-/* ---------------------------------------------------------
-   INITIALIZATION
---------------------------------------------------------- */
 
 (async function init(){
-
   try{
-
-    const consent =
-      COOKIE.get(
-        "veil_cookie_consent"
-      );
-
-    if(consent === "yes"){
-
-      COOKIE.consent =
-        true;
-
-      loadSavedData();
-
-    }
-
-    applyCSSVariables();
-
-    document.title =
-      cloak.title || "Veil";
-
-    if(cloak.icon){
-
-      document.getElementById(
-        "favicon"
-      ).href =
-        cloak.icon;
-
-    }
-
-    await loadVeilEngineScript();
-
-    setEngineStatus(
-      "Veil engine loaded • waiting for browser initialization",
-      "checking"
-    );
-
+    const consent=COOKIE.get("veil_cookie_consent");
+    if(consent==="yes"){COOKIE.consent=true;loadSavedData();}
+    applyCSSVariables();document.title=cloak.title||"Veil";document.getElementById("favicon").href=cloak.icon||FAVICON;
+    if(!window.VeilEngine)await new Promise((resolve,reject)=>{const script=document.createElement("script");script.src="./sc.js";script.async=false;script.onload=resolve;script.onerror=()=>reject(new Error("Could not load sc.js from the repository root. Expected: ./sc.js"));document.head.appendChild(script);});
+    setAdBlock(getAdBlock());
+    setEngineStatus("Veil engine loaded • waiting for browser initialization","checking");
     createTab(true);
-
-    if(
-      consent !== "yes"
-    ){
-
-      showCookieConsent();
-
-    }
-
-  }catch(error){
-
-    console.error(
-      "Veil startup error:",
-      error
-    );
-
-    setEngineStatus(
-      "Engine startup failed • SC.js could not be loaded",
-      "error"
-    );
-
-    createTab(true);
-
-  }
-
+    if(consent!=="yes")showCookieConsent();
+  }catch(error){console.error("Veil startup error:",error);setEngineStatus("Engine startup failed • sc.js could not be loaded","error");createTab(true);}
 })();
+
 </script>
 
 </body>
