@@ -1,1573 +1,534 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Veil</title>
-
-<link
-  id="favicon"
-  rel="icon"
-  href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23101010'/%3E%3Cpath d='M50 15L80 28V48C80 69 67 84 50 90C33 84 20 69 20 48V28L50 15Z' fill='none' stroke='%23fff' stroke-width='7'/%3E%3C/svg%3E"
->
-
-<style>
-:root{
-  --bg:#101010;
-  --bg2:#151515;
-  --bg3:#1b1b1b;
-  --panel:#181818;
-  --panel2:#202020;
-  --border:#2b2b2b;
-  --text:#f2f2f2;
-  --muted:#888;
-  --accent:#fff;
-  --accentText:#111;
-  --newtab:#101010;
-  --danger:#ff5c5c;
-}
-
-*{
-  box-sizing:border-box;
-  margin:0;
-  padding:0;
-}
-
-html,
-body,
-#browser{
-  width:100%;
-  height:100%;
-  overflow:hidden;
-  background:var(--bg);
-  color:var(--text);
-}
-
-html,
-body,
-#browser,
-.chrome,
-.tabs-row,
-.toolbar,
-.viewport,
-.page{
-  background-image:none !important;
-  filter:none !important;
-  box-shadow:none !important;
-}
-
-body{
-  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-}
-
-button,
-input{
-  font:inherit;
-}
-
-button{
-  border:0;
-  outline:0;
-}
-
-button:focus,
-input:focus{
-  outline:0;
-}
-
-#browser{
-  display:flex;
-  flex-direction:column;
-}
-
-.chrome{
-  flex:0 0 auto;
-  background:var(--bg2);
-  border-bottom:1px solid var(--border);
-  position:relative;
-  z-index:100;
-}
-
-.tabs-row{
-  height:42px;
-  display:flex;
-  align-items:flex-end;
-  padding:0 7px;
-  gap:4px;
-  overflow:hidden;
-}
-
-.tabs{
-  height:100%;
-  display:flex;
-  align-items:flex-end;
-  gap:4px;
-  min-width:0;
-  overflow-x:auto;
-  overflow-y:hidden;
-  scrollbar-width:none;
-}
-
-.tabs::-webkit-scrollbar{
-  display:none;
-}
-
-.tab{
-  height:36px;
-  min-width:145px;
-  max-width:235px;
-  flex:0 0 auto;
-  display:flex;
-  align-items:center;
-  gap:8px;
-  padding:0 7px 0 10px;
-  border-radius:9px 9px 0 0;
-  background:transparent;
-  color:var(--muted);
-  cursor:pointer;
-  user-select:none;
-  position:relative;
-  transform-origin:left center;
-  transition:background .14s ease,color .14s ease;
-}
-
-.tab:hover{
-  background:var(--bg3);
-  color:var(--text);
-}
-
-.tab.active{
-  background:var(--panel);
-  color:var(--text);
-}
-
-.tab.opening{
-  animation:tabOpen .18s cubic-bezier(.2,.8,.2,1);
-}
-
-.tab.closing{
-  animation:tabClose .16s cubic-bezier(.4,0,1,1) forwards;
-}
-
-@keyframes tabOpen{
-  from{
-    opacity:0;
-    transform:scaleX(.72) translateY(4px);
-  }
-  to{
-    opacity:1;
-    transform:scaleX(1) translateY(0);
-  }
-}
-
-@keyframes tabClose{
-  from{
-    opacity:1;
-    transform:scaleX(1);
-  }
-  to{
-    opacity:0;
-    transform:scaleX(.72);
-  }
-}
-
-.tab-icon{
-  width:16px;
-  height:16px;
-  flex:0 0 16px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  overflow:hidden;
-  line-height:0;
-}
-
-.tab-icon svg{
-  width:14px;
-  height:14px;
-  display:block;
-}
-
-.tab-title{
-  flex:1;
-  min-width:0;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-  font-size:12px;
-  line-height:1;
-}
-
-.tab-close{
-  width:21px;
-  height:21px;
-  flex:0 0 21px;
-  border-radius:5px;
-  background:transparent;
-  color:var(--muted);
-  cursor:pointer;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:15px;
-}
-
-.tab-close:hover{
-  background:var(--panel2);
-  color:var(--text);
-}
-
-.new-tab{
-  width:32px;
-  height:32px;
-  flex:0 0 32px;
-  margin-bottom:2px;
-  border-radius:8px;
-  background:transparent;
-  color:var(--muted);
-  cursor:pointer;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:21px;
-  line-height:1;
-  transition:background .14s,color .14s;
-}
-
-.new-tab:hover{
-  background:var(--panel2);
-  color:var(--text);
-}
-
-.toolbar{
-  height:52px;
-  display:flex;
-  align-items:center;
-  gap:6px;
-  padding:6px 9px;
-  background:var(--panel);
-  overflow:hidden;
-}
-
-.nav-buttons{
-  display:flex;
-  gap:2px;
-  flex:0 0 auto;
-}
-
-.tool-btn,
-.menu-btn{
-  background:transparent;
-  color:var(--muted);
-  cursor:pointer;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-.tool-btn{
-  width:35px;
-  height:35px;
-  border-radius:8px;
-  font-size:18px;
-  transition:background .14s,color .14s;
-}
-
-.tool-btn:hover,
-.menu-btn:hover{
-  background:var(--panel2);
-  color:var(--text);
-}
-
-.tool-btn:disabled{
-  opacity:.28;
-  cursor:default;
-}
-
-.address-wrap{
-  flex:1;
-  min-width:0;
-  height:35px;
-  display:flex;
-  align-items:center;
-  border-radius:18px;
-  background:var(--bg2);
-  border:1px solid var(--border);
-  padding:0 7px 0 13px;
-}
-
-.address-wrap:focus-within{
-  border-color:#444;
-  background:var(--bg3);
-}
-
-.address-icon{
-  color:var(--muted);
-  margin-right:8px;
-  font-size:14px;
-  flex:0 0 auto;
-}
-
-#address{
-  flex:1;
-  min-width:0;
-  border:0;
-  background:transparent;
-  color:var(--text);
-  font-size:13px;
-}
-
-#address::placeholder{
-  color:#666;
-}
-
-.address-bookmark{
-  width:29px;
-  height:29px;
-  flex:0 0 29px;
-  border-radius:50%;
-  background:transparent;
-  color:var(--muted);
-  cursor:pointer;
-  font-size:16px;
-}
-
-.address-bookmark:hover{
-  background:var(--panel2);
-  color:var(--text);
-}
-
-.address-bookmark.saved{
-  color:var(--accent);
-}
-
-.menu-btn{
-  width:36px;
-  height:36px;
-  flex:0 0 36px;
-  border-radius:9px;
-  font-size:20px;
-  letter-spacing:1px;
-}
-
-.viewport{
-  position:relative;
-  flex:1;
-  min-height:0;
-  width:100%;
-  background:var(--bg);
-  overflow:hidden;
-}
-
-.page{
-  position:absolute;
-  inset:0;
-  display:none;
-  background:var(--bg);
-}
-
-.page.active{
-  display:block;
-}
-
-.engine-frame{
-  width:100%;
-  height:100%;
-  display:block;
-  border:0;
-  background:#fff;
-}
-
-.newtab-page{
-  width:100%;
-  height:100%;
-  overflow:auto;
-  background-color:var(--newtab);
-  background-size:cover;
-  background-position:center;
-  background-repeat:no-repeat;
-  position:relative;
-}
-
-.newtab-overlay{
-  width:100%;
-  min-height:100%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:40px 20px;
-  background:transparent;
-}
-
-.newtab-center{
-  width:min(700px,100%);
-  text-align:center;
-}
-
-.veil-mark{
-  width:74px;
-  height:74px;
-  margin:0 auto 22px;
-  border-radius:22px;
-  background:rgba(255,255,255,.045);
-  border:1px solid rgba(255,255,255,.08);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-.veil-mark svg{
-  width:42px;
-  height:42px;
-}
-
-.newtab-title{
-  font-size:clamp(42px,7vw,70px);
-  font-weight:700;
-  letter-spacing:-3px;
-  line-height:1;
-}
-
-.newtab-subtitle{
-  color:var(--muted);
-  margin-top:12px;
-  font-size:14px;
-}
-
-.search-box{
-  width:min(620px,100%);
-  height:54px;
-  margin:30px auto 0;
-  border-radius:17px;
-  background:rgba(20,20,20,.9);
-  border:1px solid var(--border);
-  display:flex;
-  align-items:center;
-  padding:0 18px;
-}
-
-.search-box span{
-  color:var(--muted);
-  margin-right:11px;
-}
-
-.search-box input{
-  flex:1;
-  min-width:0;
-  border:0;
-  background:transparent;
-  color:var(--text);
-  font-size:14px;
-}
-
-.quick-links{
-  display:flex;
-  justify-content:center;
-  flex-wrap:wrap;
-  gap:9px;
-  margin-top:22px;
-}
-
-.quick-link{
-  border:1px solid var(--border);
-  background:rgba(20,20,20,.72);
-  color:var(--muted);
-  padding:9px 13px;
-  border-radius:11px;
-  cursor:pointer;
-  font-size:12px;
-}
-
-.quick-link:hover{
-  color:var(--text);
-  background:var(--panel2);
-}
-
-.menu{
-  position:fixed;
-  top:94px;
-  right:10px;
-  width:245px;
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:13px;
-  padding:7px;
-  z-index:1000;
-  display:none;
-}
-
-.menu.open{
-  display:block;
-}
-
-.menu-item{
-  width:100%;
-  height:38px;
-  padding:0 11px;
-  border-radius:8px;
-  background:transparent;
-  color:var(--text);
-  display:flex;
-  align-items:center;
-  gap:11px;
-  cursor:pointer;
-  text-align:left;
-  font-size:13px;
-}
-
-.menu-item:hover{
-  background:var(--panel2);
-}
-
-.menu-icon{
-  width:20px;
-  text-align:center;
-  color:var(--muted);
-}
-
-.menu-separator{
-  height:1px;
-  background:var(--border);
-  margin:6px 4px;
-}
-
-.backdrop{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.55);
-  z-index:1100;
-  display:none;
-}
-
-.backdrop.open{
-  display:block;
-}
-
-.panel{
-  position:fixed;
-  right:0;
-  top:0;
-  height:100%;
-  width:min(430px,100%);
-  background:var(--panel);
-  border-left:1px solid var(--border);
-  z-index:1200;
-  transform:translateX(100%);
-  transition:transform .22s ease;
-  display:flex;
-  flex-direction:column;
-}
-
-.panel.open{
-  transform:translateX(0);
-}
-
-.panel-header{
-  height:65px;
-  padding:0 20px;
-  border-bottom:1px solid var(--border);
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-}
-
-.panel-header h2{
-  font-size:17px;
-}
-
-.close-panel{
-  width:32px;
-  height:32px;
-  border-radius:8px;
-  background:transparent;
-  color:var(--muted);
-  cursor:pointer;
-  font-size:20px;
-}
-
-.close-panel:hover{
-  background:var(--panel2);
-  color:var(--text);
-}
-
-.panel-body{
-  padding:20px;
-  overflow-y:auto;
-}
-
-.setting-section{
-  margin-bottom:28px;
-}
-
-.setting-title{
-  font-size:12px;
-  color:var(--muted);
-  text-transform:uppercase;
-  letter-spacing:.09em;
-  margin-bottom:11px;
-}
-
-.preset-grid{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:9px;
-}
-
-.preset{
-  min-height:67px;
-  border:1px solid var(--border);
-  background:var(--bg2);
-  border-radius:11px;
-  cursor:pointer;
-  text-align:left;
-  padding:10px;
-  transition:border-color .14s,transform .14s;
-}
-
-.preset:hover{
-  border-color:#555;
-  transform:translateY(-1px);
-}
-
-.preset-name{
-  font-size:12px;
-  margin-bottom:9px;
-}
-
-.preset-preview{
-  display:flex;
-  gap:5px;
-}
-
-.preset-dot{
-  width:14px;
-  height:14px;
-  border-radius:50%;
-}
-
-.input-row{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  margin-bottom:9px;
-}
-
-.input-label{
-  width:90px;
-  flex:0 0 90px;
-  font-size:12px;
-  color:var(--muted);
-}
-
-.text-input{
-  flex:1;
-  min-width:0;
-  height:36px;
-  border-radius:8px;
-  border:1px solid var(--border);
-  background:var(--bg2);
-  color:var(--text);
-  padding:0 10px;
-  font-size:12px;
-}
-
-.color-input{
-  width:45px;
-  height:36px;
-  padding:3px;
-  border-radius:8px;
-  border:1px solid var(--border);
-  background:var(--bg2);
-  cursor:pointer;
-}
-
-.primary-btn{
-  width:100%;
-  height:38px;
-  border-radius:9px;
-  background:var(--accent);
-  color:var(--accentText);
-  cursor:pointer;
-  font-size:12px;
-  font-weight:600;
-}
-
-.primary-btn:hover{
-  opacity:.9;
-}
-
-.secondary-btn{
-  width:100%;
-  height:38px;
-  border-radius:9px;
-  background:var(--bg2);
-  border:1px solid var(--border);
-  color:var(--text);
-  cursor:pointer;
-  font-size:12px;
-}
-
-.bookmark-row{
-  display:flex;
-  align-items:center;
-  gap:9px;
-  padding:10px;
-  border:1px solid var(--border);
-  background:var(--bg2);
-  border-radius:9px;
-  margin-bottom:8px;
-}
-
-.bookmark-main{
-  min-width:0;
-  flex:1;
-  cursor:pointer;
-}
-
-.bookmark-title{
-  font-size:12px;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
-.bookmark-url{
-  font-size:10px;
-  color:var(--muted);
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  margin-top:3px;
-}
-
-.bookmark-delete{
-  width:28px;
-  height:28px;
-  border-radius:7px;
-  background:transparent;
-  color:var(--muted);
-  cursor:pointer;
-}
-
-.bookmark-delete:hover{
-  background:var(--panel2);
-  color:var(--danger);
-}
-
-.empty{
-  padding:30px 10px;
-  text-align:center;
-  color:var(--muted);
-  font-size:12px;
-}
-
-.status{
-  padding:12px;
-  border:1px solid var(--border);
-  background:var(--bg2);
-  border-radius:9px;
-  color:var(--muted);
-  font-size:11px;
-  line-height:1.6;
-}
-
-.status.ready{
-  color:#9ee6aa;
-  border-color:#29452f;
-}
-
-.status.error{
-  color:#ff9b9b;
-  border-color:#512525;
-}
-
-.status.checking{
-  color:#d0d0d0;
-}
-
-.engine-error{
-  height:100%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:30px;
-  background:var(--bg);
-  overflow:auto;
-}
-
-.engine-error-box{
-  width:min(620px,100%);
-  border:1px solid var(--border);
-  background:var(--panel);
-  border-radius:14px;
-  padding:24px;
-}
-
-.engine-error-icon{
-  width:44px;
-  height:44px;
-  border-radius:12px;
-  background:#2a1515;
-  border:1px solid #4b2525;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  color:#ff8585;
-  font-size:22px;
-  margin-bottom:17px;
-}
-
-.engine-error-box h2{
-  font-size:18px;
-}
-
-.engine-error-box p{
-  margin-top:9px;
-  color:var(--muted);
-  font-size:12px;
-  line-height:1.7;
-}
-
-.engine-error-details{
-  margin-top:15px;
-  padding:12px;
-  background:var(--bg2);
-  border:1px solid var(--border);
-  border-radius:9px;
-  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
-  font-size:11px;
-  color:#aaa;
-  word-break:break-word;
-  line-height:1.6;
-}
-
-.engine-error-actions{
-  display:flex;
-  gap:9px;
-  margin-top:16px;
-}
-
-.engine-error-actions button{
-  height:36px;
-  padding:0 14px;
-  border-radius:8px;
-  cursor:pointer;
-  font-size:12px;
-}
-
-.engine-retry{
-  background:var(--accent);
-  color:var(--accentText);
-}
-
-.engine-home{
-  background:var(--bg2);
-  border:1px solid var(--border);
-  color:var(--text);
-}
-
-.cookie-overlay{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.72);
-  z-index:3000;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:20px;
-}
-
-.cookie-box{
-  width:min(430px,100%);
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:16px;
-  padding:28px;
-}
-
-.cookie-logo{
-  width:48px;
-  height:48px;
-  margin-bottom:17px;
-  color:var(--accent);
-}
-
-.cookie-logo svg{
-  width:100%;
-  height:100%;
-}
-
-.cookie-box h2{
-  font-size:20px;
-}
-
-.cookie-box p{
-  margin-top:10px;
-  color:var(--muted);
-  font-size:13px;
-  line-height:1.6;
-}
-
-.cookie-buttons{
-  display:flex;
-  gap:9px;
-  margin-top:22px;
-}
-
-.cookie-no,
-.cookie-yes{
-  flex:1;
-  height:40px;
-  border-radius:9px;
-  cursor:pointer;
-  font-size:12px;
-}
-
-.cookie-no{
-  background:var(--bg2);
-  border:1px solid var(--border);
-  color:var(--text);
-}
-
-.cookie-yes{
-  background:var(--accent);
-  color:var(--accentText);
-}
-
-@media(max-width:650px){
-  .tab{
-    min-width:125px;
-  }
-
-  .toolbar{
-    gap:3px;
-    padding:6px;
-  }
-
-  .tool-btn{
-    width:32px;
-  }
-
-  .address-wrap{
-    padding-left:10px;
-  }
-
-  .menu-btn{
-    width:32px;
-  }
-}
-
-.adblock-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid var(--border);background:var(--bg2);border-radius:9px;}
-.adblock-info{min-width:0;}
-.adblock-name{font-size:12px;}
-.adblock-description{font-size:10px;color:var(--muted);margin-top:4px;line-height:1.5;}
-.adblock-state{font-size:10px;color:var(--muted);margin-top:3px;}
-.toggle{position:relative;width:42px;height:24px;flex:0 0 42px;}
-.toggle input{opacity:0;width:0;height:0;}
-.toggle-track{position:absolute;inset:0;border-radius:20px;background:var(--bg3);border:1px solid var(--border);cursor:pointer;transition:.15s;}
-.toggle-track:before{content:"";position:absolute;width:18px;height:18px;left:2px;top:2px;border-radius:50%;background:var(--muted);transition:.15s;}
-.toggle input:checked + .toggle-track{background:var(--accent);border-color:var(--accent);}
-.toggle input:checked + .toggle-track:before{transform:translateX(18px);background:var(--accentText);}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Veil</title>
+
+    <!-- Local Veil assets -->
+    <script src="./sj/scramjet.all.js" defer></script>
+
+    <script type="module">
+        import * as BareMux from "./bm/index.mjs";
+        window.BareMux = BareMux;
+    </script>
+
+    <script src="./sc.js" defer></script>
+
+    <style>
+        :root {
+            --bg: #0b0c0f;
+            --surface: #111318;
+            --surface-2: #17191f;
+            --surface-3: #1d2027;
+
+            --border: #292d35;
+            --border-light: #343943;
+
+            --text: #f2f3f5;
+            --text-secondary: #a5a9b2;
+            --text-muted: #707580;
+
+            --accent: #e6e8ec;
+            --danger: #ef4444;
+
+            --radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            background: var(--bg);
+            color: var(--text);
+            font-family:
+                Inter,
+                ui-sans-serif,
+                system-ui,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        button,
+        input {
+            font: inherit;
+        }
+
+        button {
+            border: 0;
+            outline: none;
+        }
+
+        /* --------------------------------
+           APP
+        -------------------------------- */
+
+        #app {
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+            background: var(--bg);
+        }
+
+        /* --------------------------------
+           WISP SETTINGS
+        -------------------------------- */
+
+        .wisp-settings-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            padding: 20px;
+
+            background: rgba(5, 6, 8, 0.72);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+
+            opacity: 1;
+            visibility: visible;
+            transition:
+                opacity 0.18s ease,
+                visibility 0.18s ease;
+        }
+
+        .wisp-settings-modal.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .settings-card {
+            width: min(500px, 100%);
+            max-height: min(700px, calc(100vh - 40px));
+
+            display: flex;
+            flex-direction: column;
+
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+
+            overflow: hidden;
+
+            box-shadow:
+                0 20px 60px rgba(0, 0, 0, 0.45);
+        }
+
+        /* --------------------------------
+           HEADER
+        -------------------------------- */
+
+        .settings-header {
+            height: 64px;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            padding: 0 20px;
+
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+        }
+
+        .settings-header h2 {
+            margin: 0;
+
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        .settings-header h2 i {
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+
+        .close-btn {
+            width: 34px;
+            height: 34px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 8px;
+
+            color: var(--text-secondary);
+            background: transparent;
+
+            cursor: pointer;
+
+            transition:
+                background 0.15s ease,
+                color 0.15s ease;
+        }
+
+        .close-btn:hover {
+            background: var(--surface-3);
+            color: var(--text);
+        }
+
+        /* --------------------------------
+           CONTENT
+        -------------------------------- */
+
+        .settings-content {
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .section-title {
+            margin: 0 0 10px;
+
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            color: var(--text-secondary);
+
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+        }
+
+        .section-title:not(:first-child) {
+            margin-top: 24px;
+        }
+
+        .section-title i {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* --------------------------------
+           SERVER LIST
+        -------------------------------- */
+
+        .server-list {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .server-item {
+            width: 100%;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            min-height: 52px;
+            padding: 10px 13px;
+
+            border: 1px solid var(--border);
+            border-radius: 10px;
+
+            background: var(--surface-2);
+            color: var(--text);
+
+            cursor: pointer;
+
+            transition:
+                background 0.15s ease,
+                border-color 0.15s ease;
+        }
+
+        .server-item:hover {
+            background: var(--surface-3);
+            border-color: var(--border-light);
+        }
+
+        .server-item.active {
+            background: #1a1d23;
+            border-color: #555b66;
+        }
+
+        .server-info {
+            min-width: 0;
+
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 3px;
+        }
+
+        .server-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .server-url {
+            max-width: 330px;
+
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+
+            color: var(--text-muted);
+            font-size: 11px;
+        }
+
+        .server-status {
+            flex-shrink: 0;
+
+            display: flex;
+            align-items: center;
+            gap: 6px;
+
+            margin-left: 12px;
+
+            color: var(--text-muted);
+            font-size: 11px;
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+
+            border-radius: 50%;
+            background: #555b65;
+        }
+
+        .status-dot.online {
+            background: #8b929d;
+        }
+
+        .status-dot.error {
+            background: var(--danger);
+        }
+
+        /* --------------------------------
+           CUSTOM SERVER
+        -------------------------------- */
+
+        .custom-input-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        #custom-wisp-input {
+            min-width: 0;
+            flex: 1;
+
+            height: 42px;
+
+            padding: 0 12px;
+
+            border: 1px solid var(--border);
+            border-radius: 9px;
+
+            outline: none;
+
+            background: var(--surface-2);
+            color: var(--text);
+
+            font-size: 12px;
+
+            transition:
+                border-color 0.15s ease,
+                background 0.15s ease;
+        }
+
+        #custom-wisp-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        #custom-wisp-input:focus {
+            background: var(--surface-3);
+            border-color: var(--border-light);
+        }
+
+        #save-custom-wisp {
+            width: 42px;
+            height: 42px;
+
+            flex-shrink: 0;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border: 1px solid var(--border);
+            border-radius: 9px;
+
+            background: var(--surface-3);
+            color: var(--text);
+
+            cursor: pointer;
+
+            transition:
+                background 0.15s ease,
+                border-color 0.15s ease;
+        }
+
+        #save-custom-wisp:hover {
+            background: #242830;
+            border-color: var(--border-light);
+        }
+
+        /* --------------------------------
+           FOOTER
+        -------------------------------- */
+
+        .settings-footer {
+            padding: 13px 20px;
+
+            border-top: 1px solid var(--border);
+
+            color: var(--text-muted);
+
+            background: #0f1014;
+
+            font-size: 11px;
+            text-align: center;
+        }
+
+        /* --------------------------------
+           SCROLLBAR
+        -------------------------------- */
+
+        ::-webkit-scrollbar {
+            width: 7px;
+            height: 7px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #292d35;
+            border-radius: 999px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #383d47;
+        }
+
+        /* --------------------------------
+           MOBILE
+        -------------------------------- */
+
+        @media (max-width: 600px) {
+            .settings-card {
+                max-height: calc(100vh - 24px);
+                border-radius: 13px;
+            }
+
+            .settings-header {
+                height: 58px;
+                padding: 0 16px;
+            }
+
+            .settings-content {
+                padding: 16px;
+            }
+
+            .settings-footer {
+                padding: 12px 16px;
+            }
+
+            .server-url {
+                max-width: 210px;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
-<div id="browser">
+    <div id="app"></div>
 
-  <header class="chrome">
+    <!-- Veil Wisp Server Settings -->
+    <div
+        class="wisp-settings-modal hidden"
+        id="wisp-settings-modal"
+    >
+        <div class="settings-card">
 
-    <div class="tabs-row">
-      <div class="tabs" id="tabs"></div>
+            <div class="settings-header">
+                <h2>
+                    <i class="fa-solid fa-server"></i>
+                    Proxy Server
+                </h2>
 
-      <button
-        class="new-tab"
-        id="newTabBtn"
-        aria-label="New tab"
-        title="New tab"
-      >+</button>
-    </div>
+                <button
+                    class="close-btn"
+                    id="close-wisp-modal"
+                    aria-label="Close"
+                >
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
 
-    <div class="toolbar">
+            <div class="settings-content">
 
-      <div class="nav-buttons">
-        <button class="tool-btn" id="backBtn" title="Back">‹</button>
-        <button class="tool-btn" id="forwardBtn" title="Forward">›</button>
-        <button class="tool-btn" id="refreshBtn" title="Refresh">↻</button>
-      </div>
+                <div class="section-title">
+                    <i class="fa-solid fa-network-wired"></i>
+                    Servers
+                </div>
 
-      <div class="address-wrap">
+                <div
+                    class="server-list"
+                    id="server-list"
+                ></div>
 
-        <span class="address-icon">⌕</span>
+                <div class="section-title">
+                    <i class="fa-solid fa-plus"></i>
+                    Custom Server
+                </div>
 
-        <input
-          id="address"
-          type="text"
-          autocomplete="off"
-          spellcheck="false"
-          placeholder="Search or enter address"
-        >
+                <div class="custom-input-group">
+                    <input
+                        type="text"
+                        id="custom-wisp-input"
+                        placeholder="wss://your-server.com/wisp/"
+                        autocomplete="off"
+                        spellcheck="false"
+                    >
 
-        <button
-          class="address-bookmark"
-          id="bookmarkBtn"
-          title="Bookmark"
-        >☆</button>
+                    <button
+                        id="save-custom-wisp"
+                        aria-label="Add custom server"
+                    >
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
 
-      </div>
+            </div>
 
-      <button
-        class="menu-btn"
-        id="menuBtn"
-        title="Menu"
-      >⋮</button>
+            <div class="settings-footer">
+                Choose the server with the best connection for you.
+            </div>
 
-    </div>
-
-  </header>
-
-  <main class="viewport" id="viewport"></main>
-
-</div>
-
-<div class="menu" id="mainMenu">
-
-  <button class="menu-item" id="menuNewTab">
-    <span class="menu-icon">＋</span>
-    New tab
-  </button>
-
-  <button class="menu-item" id="menuBookmark">
-    <span class="menu-icon">☆</span>
-    Bookmark this page
-  </button>
-
-  <button class="menu-item" id="menuBookmarks">
-    <span class="menu-icon">★</span>
-    Bookmarks
-  </button>
-
-  <button class="menu-item" id="menuRename">
-    <span class="menu-icon">✎</span>
-    Rename current tab
-  </button>
-
-  <div class="menu-separator"></div>
-
-  <button class="menu-item" id="menuSettings">
-    <span class="menu-icon">⚙</span>
-    Settings
-  </button>
-
-</div>
-
-<div class="backdrop" id="backdrop"></div>
-
-<aside class="panel" id="settingsPanel">
-
-  <div class="panel-header">
-    <h2>Settings</h2>
-    <button class="close-panel" data-close-panel>×</button>
-  </div>
-
-  <div class="panel-body">
-
-    <section class="setting-section">
-
-      <div class="setting-title">Themes</div>
-
-      <div class="preset-grid">
-
-        <button class="preset" data-theme="matte">
-          <div class="preset-name">Matte Black</div>
-          <div class="preset-preview">
-            <i class="preset-dot" style="background:#101010"></i>
-            <i class="preset-dot" style="background:#1b1b1b"></i>
-            <i class="preset-dot" style="background:#fff"></i>
-          </div>
-        </button>
-
-        <button class="preset" data-theme="sakura">
-          <div class="preset-name">Sakura</div>
-          <div class="preset-preview">
-            <i class="preset-dot" style="background:#190e14"></i>
-            <i class="preset-dot" style="background:#321725"></i>
-            <i class="preset-dot" style="background:#ff8fba"></i>
-          </div>
-        </button>
-
-        <button class="preset" data-theme="forest">
-          <div class="preset-name">Forest</div>
-          <div class="preset-preview">
-            <i class="preset-dot" style="background:#0b140e"></i>
-            <i class="preset-dot" style="background:#17291b"></i>
-            <i class="preset-dot" style="background:#73c982"></i>
-          </div>
-        </button>
-
-        <button class="preset" data-theme="twilight">
-          <div class="preset-name">Twilight</div>
-          <div class="preset-preview">
-            <i class="preset-dot" style="background:#110d1a"></i>
-            <i class="preset-dot" style="background:#241936"></i>
-            <i class="preset-dot" style="background:#b88cff"></i>
-          </div>
-        </button>
-
-        <button class="preset" data-theme="sunlight">
-          <div class="preset-name">Sunlight</div>
-          <div class="preset-preview">
-            <i class="preset-dot" style="background:#191108"></i>
-            <i class="preset-dot" style="background:#32200c"></i>
-            <i class="preset-dot" style="background:#ffb84d"></i>
-          </div>
-        </button>
-
-        <button class="preset" data-theme="midnight">
-          <div class="preset-name">Midnight</div>
-          <div class="preset-preview">
-            <i class="preset-dot" style="background:#080b12"></i>
-            <i class="preset-dot" style="background:#121827"></i>
-            <i class="preset-dot" style="background:#7aa2ff"></i>
-          </div>
-        </button>
-
-      </div>
-
-    </section>
-
-    <section class="setting-section">
-
-      <div class="setting-title">Custom colors</div>
-
-      <div class="input-row">
-        <label class="input-label">Background</label>
-        <input class="color-input" id="colorBg" type="color">
-      </div>
-
-      <div class="input-row">
-        <label class="input-label">Panel</label>
-        <input class="color-input" id="colorPanel" type="color">
-      </div>
-
-      <div class="input-row">
-        <label class="input-label">Accent</label>
-        <input class="color-input" id="colorAccent" type="color">
-      </div>
-
-      <div class="input-row">
-        <label class="input-label">Text</label>
-        <input class="color-input" id="colorText" type="color">
-      </div>
-
-      <button class="primary-btn" id="applyColors">
-        Apply colors
-      </button>
-
-    </section>
-
-    <section class="setting-section">
-
-      <div class="setting-title">New-tab background</div>
-
-      <div class="input-row">
-        <input
-          class="text-input"
-          id="backgroundUrl"
-          placeholder="Image URL (leave blank for theme background)"
-        >
-      </div>
-
-      <button class="primary-btn" id="applyBackground">
-        Apply background
-      </button>
-
-    </section>
-
-    <section class="setting-section">
-
-      <div class="setting-title">Tab cloak</div>
-
-      <div class="input-row">
-        <input
-          class="text-input"
-          id="cloakTitle"
-          placeholder="Browser title"
-        >
-      </div>
-
-      <div class="input-row">
-        <input
-          class="text-input"
-          id="cloakIcon"
-          placeholder="Favicon URL"
-        >
-      </div>
-
-      <button class="primary-btn" id="applyCloak">
-        Apply cloak
-      </button>
-
-    </section>
-
-    <section class="setting-section">
-
-      <div class="setting-title">Privacy</div>
-
-      <div class="adblock-row">
-        <div class="adblock-info">
-          <div class="adblock-name">Ad blocking</div>
-          <div class="adblock-description">Block common advertising and tracking requests through the Veil service worker.</div>
-          <div class="adblock-state" id="adBlockState">Disabled</div>
         </div>
-        <label class="toggle">
-          <input type="checkbox" id="adBlockToggle">
-          <span class="toggle-track"></span>
-        </label>
-      </div>
-
-    </section>
-
-    <section class="setting-section">
-
-      <div class="setting-title">Connection</div>
-
-      <div class="status checking" id="engineStatus">
-        Checking Veil browser engine…
-      </div>
-
-    </section>
-
-    <section class="setting-section">
-
-      <div class="setting-title">Reset</div>
-
-      <button class="secondary-btn" id="resetSettings">
-        Reset settings
-      </button>
-
-    </section>
-
-  </div>
-
-</aside>
-
-<aside class="panel" id="bookmarksPanel">
-
-  <div class="panel-header">
-    <h2>Bookmarks</h2>
-    <button class="close-panel" data-close-panel>×</button>
-  </div>
-
-  <div class="panel-body" id="bookmarkList"></div>
-
-</aside>
-
-<script>
-"use strict";
-
-const THEMES = {
-  matte:{bg:"#101010",bg2:"#151515",bg3:"#1b1b1b",panel:"#181818",panel2:"#202020",border:"#2b2b2b",text:"#f2f2f2",muted:"#888888",accent:"#ffffff",accentText:"#111111",newtab:"#101010"},
-  sakura:{bg:"#190e14",bg2:"#21111a",bg3:"#321725",panel:"#28131e",panel2:"#3a1b29",border:"#512538",text:"#fff0f6",muted:"#b991a3",accent:"#ff8fba",accentText:"#250b16",newtab:"#190e14"},
-  forest:{bg:"#0b140e",bg2:"#101b13",bg3:"#17291b",panel:"#132219",panel2:"#1b3020",border:"#29452f",text:"#effff1",muted:"#8da993",accent:"#73c982",accentText:"#071109",newtab:"#0b140e"},
-  twilight:{bg:"#110d1a",bg2:"#171122",bg3:"#241936",panel:"#1c142b",panel2:"#2b1d40",border:"#412c5c",text:"#f7f0ff",muted:"#a89ab8",accent:"#b88cff",accentText:"#160c24",newtab:"#110d1a"},
-  sunlight:{bg:"#191108",bg2:"#211609",bg3:"#32200c",panel:"#281a0a",panel2:"#3a250e",border:"#513716",text:"#fff8eb",muted:"#bca783",accent:"#ffb84d",accentText:"#241303",newtab:"#191108"},
-  midnight:{bg:"#080b12",bg2:"#0d111b",bg3:"#121827",panel:"#101521",panel2:"#171e2d",border:"#263047",text:"#eef3ff",muted:"#8490a7",accent:"#7aa2ff",accentText:"#08101f",newtab:"#080b12"}
-};
-
-const DEFAULT_SETTINGS = {theme:"matte",...THEMES.matte,backgroundUrl:""};
-let settings={...DEFAULT_SETTINGS};
-let bookmarks=[];
-let cloak={title:"Veil",icon:""};
-let tabs=[];
-let activeTabId=null;
-let tabCounter=0;
-
-const STORAGE={bookmarks:"veil_bookmarks",settings:"veil_settings",cloak:"veil_cloak"};
-const AD_BLOCK_KEY="veil-adblock";
-const FAVICON="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23101010'/%3E%3Cpath d='M50 15L80 28V48C80 69 67 84 50 90C33 84 20 69 20 48V28L50 15Z' fill='none' stroke='%23fff' stroke-width='7'/%3E%3C/svg%3E";
-
-const COOKIE={
-  consent:false,
-  set(name,value,days=365){
-    if(!this.consent)return;
-    const expires=new Date(Date.now()+days*86400000).toUTCString();
-    document.cookie=encodeURIComponent(name)+"="+encodeURIComponent(value)+"; expires="+expires+"; path=/; SameSite=Lax";
-  },
-  get(name){
-    const target=encodeURIComponent(name)+"=";
-    for(const part of document.cookie.split(";")){
-      const p=part.trim();
-      if(p.startsWith(target))return decodeURIComponent(p.slice(target.length));
-    }
-    return null;
-  }
-};
-
-function uid(){return "tab_"+Date.now().toString(36)+"_"+(++tabCounter).toString(36);}
-function escapeHTML(value){return String(value??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));}
-function getTab(id=activeTabId){return tabs.find(tab=>tab.id===id)||null;}
-function getActiveTab(){return getTab();}
-function isBookmarked(url){return bookmarks.some(b=>b.url===url);}
-
-function save(){
-  if(!COOKIE.consent)return;
-  try{
-    COOKIE.set(STORAGE.bookmarks,JSON.stringify(bookmarks));
-    COOKIE.set(STORAGE.settings,JSON.stringify(settings));
-    COOKIE.set(STORAGE.cloak,JSON.stringify(cloak));
-  }catch(error){console.warn("Veil could not save settings:",error);}
-}
-
-function loadSavedData(){
-  try{
-    const b=COOKIE.get(STORAGE.bookmarks),s=COOKIE.get(STORAGE.settings),c=COOKIE.get(STORAGE.cloak);
-    if(b)bookmarks=JSON.parse(b)||[];
-    if(s)settings={...DEFAULT_SETTINGS,...JSON.parse(s)};
-    if(c)cloak={...cloak,...JSON.parse(c)};
-  }catch(error){console.warn("Veil saved data could not be loaded:",error);}
-}
-
-function applyCSSVariables(){
-  const root=document.documentElement;
-  ["bg","bg2","bg3","panel","panel2","border","text","muted","accent","accentText","newtab"].forEach(name=>root.style.setProperty("--"+name,settings[name]));
-}
-
-function applyNewTabBackground(){
-  document.querySelectorAll(".newtab-page").forEach(el=>{
-    el.style.backgroundImage=settings.backgroundUrl?`url("${settings.backgroundUrl.replace(/"/g,"%22")}")`:"none";
-  });
-}
-
-function tabIcon(){return `<svg viewBox="0 0 100 100" fill="none" aria-hidden="true"><path d="M50 14L81 27V47C81 69 68 84 50 91C32 84 19 69 19 47V27L50 14Z" stroke="currentColor" stroke-width="8" stroke-linejoin="round"/></svg>`;}
-
-function normalizeUrl(input){
-  let value=String(input||"").trim();
-  if(!value)return null;
-  if(/^https?:\/\//i.test(value))return value;
-  if(/^[a-z][a-z0-9+.-]*:/i.test(value))return value;
-  if(/^[\w.-]+\.[a-z]{2,}(\/.*)?$/i.test(value))return "https://"+value;
-  return "https://www.google.com/search?q="+encodeURIComponent(value);
-}
-
-function setEngineStatus(message,type="checking"){
-  const status=document.getElementById("engineStatus");
-  if(!status)return;
-  status.textContent=message;
-  status.classList.remove("ready","error","checking");
-  status.classList.add(type);
-}
-
-function showEngineError(wrapper,error){
-  const message=error&&error.message?error.message:String(error||"Unknown error");
-  wrapper.innerHTML=`<div class="engine-error"><div class="engine-error-box"><div class="engine-error-icon">!</div><h2>Veil browser engine unavailable</h2><p>The Veil interface loaded correctly, but <b>SC.js</b> could not initialize the local Scramjet browser engine.</p><p>This is an engine initialization problem, not a problem with the website you tried to open.</p><div class="engine-error-details">${escapeHTML(message)}</div><div class="engine-error-actions"><button class="engine-retry" data-retry-engine>Retry</button><button class="engine-home" data-engine-home>New tab</button></div></div></div>`;
-  wrapper.querySelector("[data-retry-engine]")?.addEventListener("click",()=>{window.VeilEngine?.reset?.();renderViewport();});
-  wrapper.querySelector("[data-engine-home]")?.addEventListener("click",()=>{const page=getActiveTab();if(!page)return;page.newTab=true;page.url="";page.history=[];page.historyIndex=-1;render();});
-}
-
-async function createEngineFrame(page,wrapper){
-  try{
-    if(!window.VeilEngine||typeof window.VeilEngine.init!=="function")throw new Error("sc.js did not load. Expected window.VeilEngine.");
-    setEngineStatus("Initializing local Scramjet engine…","checking");
-    await window.VeilEngine.init();
-    setEngineStatus("Ready • local engine initialized","ready");
-    if(typeof window.VeilEngine.createFrame!=="function")throw new Error("sc.js loaded, but VeilEngine.createFrame() is unavailable.");
-
-    const frameObj=await window.VeilEngine.createFrame();
-    if(!frameObj)throw new Error("Scramjet returned an empty browser frame.");
-
-    const frame=frameObj.frame||frameObj.element||frameObj;
-    if(!(frame instanceof HTMLElement))throw new Error("Scramjet returned an invalid frame element.");
-
-    frame.classList.add("engine-frame");
-    frame.dataset.tabId=page.id;
-    wrapper.replaceChildren(frame);
-    page.engineFrame=frameObj;
-
-    if(page.url&&typeof frameObj.go==="function")await frameObj.go(page.url);
-    else if(page.url&&typeof frameObj.navigate==="function")await frameObj.navigate(page.url);
-  }catch(error){
-    console.error("Veil engine error:",error);
-    setEngineStatus("Engine error • see the browser page for details","error");
-    showEngineError(wrapper,error);
-  }
-}
-
-function renderTabs(){
-  const container=document.getElementById("tabs");
-  container.innerHTML=tabs.map(tab=>`<div class="tab ${tab.id===activeTabId?"active ":""}${tab.animOpen?"opening":""}" data-tab-id="${escapeHTML(tab.id)}"><div class="tab-icon">${tabIcon()}</div><div class="tab-title">${escapeHTML(tab.title)}</div><button class="tab-close" data-close="${escapeHTML(tab.id)}" aria-label="Close tab">×</button></div>`).join("");
-  tabs.forEach(tab=>tab.animOpen=false);
-  container.querySelectorAll(".tab").forEach(el=>{
-    el.addEventListener("click",e=>{if(e.target.closest(".tab-close"))return;activeTabId=el.dataset.tabId;render();});
-    el.addEventListener("dblclick",e=>{if(!e.target.closest(".tab-close"))renameCurrentTab(el.dataset.tabId);});
-  });
-  container.querySelectorAll("[data-close]").forEach(btn=>btn.addEventListener("click",e=>{e.stopPropagation();closeTab(btn.dataset.close);}));
-}
-
-function renderViewport(){
-  const viewport=document.getElementById("viewport");
-  viewport.innerHTML="";
-  tabs.forEach(page=>{
-    const wrapper=document.createElement("section");
-    wrapper.className="page"+(page.id===activeTabId?" active":"");
-    wrapper.dataset.pageId=page.id;
-    if(page.newTab){
-      wrapper.innerHTML=`<div class="newtab-page"><div class="newtab-overlay"><div class="newtab-center"><div class="veil-mark">${tabIcon()}</div><div class="newtab-title">Veil</div><div class="newtab-subtitle">A clean, private browsing interface</div><div class="search-box"><span>⌕</span><input class="newtab-search" data-page="${escapeHTML(page.id)}" placeholder="Search or enter address" autocomplete="off" spellcheck="false"></div><div class="quick-links"><button class="quick-link" data-url="https://www.google.com">Google</button><button class="quick-link" data-url="https://www.youtube.com">YouTube</button><button class="quick-link" data-action="bookmarks">Bookmarks</button><button class="quick-link" data-action="settings">Settings</button></div></div></div></div>`;
-    }else{
-      const frameContainer=document.createElement("div");
-      frameContainer.style.width="100%";frameContainer.style.height="100%";frameContainer.dataset.engineContainer=page.id;
-      wrapper.appendChild(frameContainer);
-      createEngineFrame(page,frameContainer);
-    }
-    viewport.appendChild(wrapper);
-  });
-  applyNewTabBackground();
-  viewport.querySelectorAll(".newtab-search").forEach(input=>input.addEventListener("keydown",e=>{if(e.key==="Enter"){activeTabId=input.dataset.page;navigate(input.value);}}));
-  viewport.querySelectorAll(".quick-link").forEach(button=>button.addEventListener("click",()=>{
-    const page=button.closest(".page");
-    if(button.dataset.url){activeTabId=page.dataset.pageId;navigate(button.dataset.url);}
-    else if(button.dataset.action==="bookmarks")openPanel("bookmarksPanel");
-    else if(button.dataset.action==="settings")openPanel("settingsPanel");
-  }));
-}
-
-function renderToolbar(){
-  const page=getActiveTab(),address=document.getElementById("address");
-  address.value=page?.url||"";
-  document.getElementById("backBtn").disabled=!page||page.historyIndex<=0;
-  document.getElementById("forwardBtn").disabled=!page||page.historyIndex>=page.history.length-1;
-  const bookmark=document.getElementById("bookmarkBtn");
-  const saved=!!(page?.url&&isBookmarked(page.url));
-  bookmark.classList.toggle("saved",saved);bookmark.textContent=saved?"★":"☆";
-}
-
-function render(){renderTabs();renderViewport();renderToolbar();renderBookmarks();loadColorInputs();loadCloakInputs();loadAdBlockInput();}
-
-async function navigate(raw){
-  const page=getActiveTab(),value=normalizeUrl(raw);if(!page||!value)return;
-  page.newTab=false;
-  if(page.historyIndex<page.history.length-1)page.history=page.history.slice(0,page.historyIndex+1);
-  page.history.push(value);page.historyIndex=page.history.length-1;page.url=value;
-  try{page.title=new URL(value).hostname||"Veil";}catch{page.title="Veil";}
-  render();
-}
-
-async function goBack(){const page=getActiveTab();if(!page||page.historyIndex<=0)return;page.historyIndex--;page.url=page.history[page.historyIndex];page.newTab=false;render();}
-async function goForward(){const page=getActiveTab();if(!page||page.historyIndex>=page.history.length-1)return;page.historyIndex++;page.url=page.history[page.historyIndex];page.newTab=false;render();}
-
-async function reload(){
-  const page=getActiveTab();if(!page||!page.url)return;
-  if(page.engineFrame&&typeof page.engineFrame.reload==="function"){await page.engineFrame.reload();return;}
-  renderViewport();
-}
-
-function createTab(newTab=true){
-  const tab={id:uid(),title:newTab?"New Tab":"Veil",url:"",history:[],historyIndex:-1,newTab,animOpen:true,engineFrame:null};
-  tabs.push(tab);activeTabId=tab.id;render();
-}
-
-function closeTab(id){
-  const index=tabs.findIndex(tab=>tab.id===id);if(index<0)return;
-  const element=document.querySelector(`[data-tab-id="${CSS.escape(id)}"]`);
-  if(element){element.classList.add("closing");setTimeout(()=>finishClose(id),160);}else finishClose(id);
-}
-function finishClose(id){
-  const index=tabs.findIndex(tab=>tab.id===id);if(index<0)return;
-  tabs.splice(index,1);
-  if(!tabs.length){createTab(true);return;}
-  if(activeTabId===id)activeTabId=tabs[Math.min(index,tabs.length-1)].id;
-  render();
-}
-
-function renameCurrentTab(id=activeTabId){const page=getTab(id);if(!page)return;const name=prompt("Enter a name for this tab:",page.title);if(name?.trim()){page.title=name.trim();render();}}
-
-function toggleBookmark(){
-  const page=getActiveTab();if(!page?.url)return;
-  const existing=bookmarks.find(b=>b.url===page.url);
-  if(existing)bookmarks=bookmarks.filter(b=>b.url!==page.url);
-  else bookmarks.push({id:uid(),title:page.title||page.url,url:page.url});
-  save();render();
-}
-
-function renderBookmarks(){
-  const list=document.getElementById("bookmarkList");
-  if(!bookmarks.length){list.innerHTML='<div class="empty">No bookmarks yet.</div>';return;}
-  list.innerHTML=bookmarks.map(b=>`<div class="bookmark-row"><div class="bookmark-main" data-open-bookmark="${escapeHTML(b.url)}"><div class="bookmark-title">${escapeHTML(b.title)}</div><div class="bookmark-url">${escapeHTML(b.url)}</div></div><button class="bookmark-delete" data-delete-bookmark="${escapeHTML(b.id)}">×</button></div>`).join("");
-  list.querySelectorAll("[data-open-bookmark]").forEach(el=>el.onclick=()=>{const url=el.dataset.openBookmark;closePanels();navigate(url);});
-  list.querySelectorAll("[data-delete-bookmark]").forEach(el=>el.onclick=()=>{bookmarks=bookmarks.filter(b=>b.id!==el.dataset.deleteBookmark);save();renderBookmarks();renderToolbar();});
-}
-
-function openPanel(id){closeMenu();document.getElementById("backdrop").classList.add("open");document.getElementById(id).classList.add("open");}
-function closePanels(){document.getElementById("backdrop").classList.remove("open");document.querySelectorAll(".panel").forEach(p=>p.classList.remove("open"));}
-function closeMenu(){document.getElementById("mainMenu").classList.remove("open");}
-
-function loadColorInputs(){document.getElementById("colorBg").value=settings.bg;document.getElementById("colorPanel").value=settings.panel;document.getElementById("colorAccent").value=settings.accent;document.getElementById("colorText").value=settings.text;}
-function loadCloakInputs(){document.getElementById("cloakTitle").value=cloak.title||"";document.getElementById("cloakIcon").value=cloak.icon||"";}
-function applyTheme(name){if(!THEMES[name])return;settings={...settings,...THEMES[name],theme:name};applyCSSVariables();save();render();}
-function applyCustomColors(){settings.bg=colorBg.value;settings.panel=colorPanel.value;settings.accent=colorAccent.value;settings.text=colorText.value;applyCSSVariables();save();render();}
-function applyBackground(){settings.backgroundUrl=document.getElementById("backgroundUrl").value.trim();save();render();}
-function applyCloak(){cloak.title=document.getElementById("cloakTitle").value.trim()||"Veil";cloak.icon=document.getElementById("cloakIcon").value.trim();document.title=cloak.title;document.getElementById("favicon").href=cloak.icon||FAVICON;save();}
-function resetSettings(){settings={...DEFAULT_SETTINGS};cloak={title:"Veil",icon:""};document.title="Veil";document.getElementById("favicon").href=FAVICON;applyCSSVariables();save();render();}
-
-function getAdBlock(){return localStorage.getItem(AD_BLOCK_KEY)==="true";}
-function loadAdBlockInput(){const input=document.getElementById("adBlockToggle");const label=document.getElementById("adBlockState");if(input)input.checked=getAdBlock();if(label)label.textContent=getAdBlock()?"Enabled":"Disabled";}
-function setAdBlock(enabled){
-  const value=!!enabled;
-  localStorage.setItem(AD_BLOCK_KEY,String(value));
-  window.VeilEngine?.setAdBlock?.(value);
-  loadAdBlockInput();
-}
-
-newTabBtn.onclick=()=>createTab(true);
-backBtn.onclick=goBack;forwardBtn.onclick=goForward;refreshBtn.onclick=reload;bookmarkBtn.onclick=toggleBookmark;
-address.addEventListener("keydown",e=>{if(e.key==="Enter")navigate(e.target.value);});
-menuBtn.onclick=e=>{e.stopPropagation();document.getElementById("mainMenu").classList.toggle("open");};
-menuNewTab.onclick=()=>{closeMenu();createTab(true);};
-menuBookmark.onclick=()=>{toggleBookmark();closeMenu();};
-menuBookmarks.onclick=()=>openPanel("bookmarksPanel");
-menuRename.onclick=()=>{closeMenu();renameCurrentTab();};
-menuSettings.onclick=()=>openPanel("settingsPanel");
-backdrop.onclick=closePanels;
-document.querySelectorAll("[data-close-panel]").forEach(b=>b.onclick=closePanels);
-document.querySelectorAll("[data-theme]").forEach(b=>b.onclick=()=>applyTheme(b.dataset.theme));
-applyColors.onclick=applyCustomColors;applyBackground.onclick=applyBackground;applyCloak.onclick=applyCloak;resetSettings.onclick=resetSettings;
-document.getElementById("adBlockToggle")?.addEventListener("change",e=>setAdBlock(e.target.checked));
-
-document.addEventListener("click",e=>{if(!e.target.closest("#mainMenu")&&!e.target.closest("#menuBtn"))closeMenu();});
-
-document.addEventListener("keydown",e=>{
-  const modifier=e.ctrlKey||e.metaKey,key=e.key.toLowerCase();
-  if(modifier&&key==="l"){e.preventDefault();address.focus();address.select();}
-  if(modifier&&key==="t"){e.preventDefault();createTab(true);}
-  if(modifier&&key==="w"){e.preventDefault();if(activeTabId)closeTab(activeTabId);}
-  if(modifier&&key==="d"){e.preventDefault();toggleBookmark();}
-  if(e.altKey&&e.key==="ArrowLeft"){e.preventDefault();goBack();}
-  if(e.altKey&&e.key==="ArrowRight"){e.preventDefault();goForward();}
-  if(modifier&&key==="r"){e.preventDefault();reload();}
-});
-
-function showCookieConsent(){
-  const overlay=document.createElement("div");overlay.className="cookie-overlay";
-  overlay.innerHTML=`<div class="cookie-box"><div class="cookie-logo"><svg viewBox="0 0 100 100" fill="none"><path d="M50 12L82 26V47C82 69 68 85 50 91C32 85 18 69 18 47V26L50 12Z" stroke="currentColor" stroke-width="7"/></svg></div><h2>Allow cookies?</h2><p>Veil can use cookies to remember your bookmarks, appearance, background, and other browser preferences.<br><br>If you choose No, Veil will still work, but nothing will be saved between visits.</p><div class="cookie-buttons"><button class="cookie-no" id="cookieNo">No</button><button class="cookie-yes" id="cookieYes">Yes</button></div></div>`;
-  document.body.appendChild(overlay);
-  cookieYes.onclick=()=>{COOKIE.consent=true;COOKIE.set("veil_cookie_consent","yes");loadSavedData();save();overlay.remove();applyCSSVariables();document.title=cloak.title||"Veil";document.getElementById("favicon").href=cloak.icon||FAVICON;render();};
-  cookieNo.onclick=()=>{COOKIE.consent=false;overlay.remove();render();};
-}
-
-(async function init(){
-  try{
-    const consent=COOKIE.get("veil_cookie_consent");
-    if(consent==="yes"){COOKIE.consent=true;loadSavedData();}
-    applyCSSVariables();document.title=cloak.title||"Veil";document.getElementById("favicon").href=cloak.icon||FAVICON;
-    if(!window.VeilEngine)await new Promise((resolve,reject)=>{const script=document.createElement("script");script.src="./sc.js";script.async=false;script.onload=resolve;script.onerror=()=>reject(new Error("Could not load sc.js from the repository root. Expected: ./sc.js"));document.head.appendChild(script);});
-    setAdBlock(getAdBlock());
-    setEngineStatus("Veil engine loaded • waiting for browser initialization","checking");
-    createTab(true);
-    if(consent!=="yes")showCookieConsent();
-  }catch(error){console.error("Veil startup error:",error);setEngineStatus("Engine startup failed • sc.js could not be loaded","error");createTab(true);}
-})();
-
-</script>
+    </div>
 
 </body>
 </html>

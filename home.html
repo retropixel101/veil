@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Veil · New Tab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23101010'/%3E%3Cpath d='M50 15L80 28V48C80 69 67 84 50 90C33 84 20 69 20 48V28L50 15Z' fill='none' stroke='%23fff' stroke-width='7'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* ===== VEIL THEME VARIABLES (matte black default) ===== */
+    :root {
+      --bg: #101010;
+      --bg2: #151515;
+      --bg3: #1b1b1b;
+      --panel: #181818;
+      --panel2: #202020;
+      --border: #2b2b2b;
+      --text: #f2f2f2;
+      --muted: #888888;
+      --accent: #ffffff;
+      --accent-text: #111111;
+      --newtab: #101010;
+      --danger: #ff5c5c;
+      --radius: 12px;
+      --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--newtab);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      background-image: none;
+      filter: none;
+      box-shadow: none;
+    }
+
+    /* ===== VEIL MARK / ICON ===== */
+    .veil-mark {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.045);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .veil-mark svg {
+      width: 36px;
+      height: 36px;
+      color: var(--text);
+    }
+
+    /* ===== CLOCK & DATE ===== */
+    .clock {
+      font-size: 3.6rem;
+      font-weight: 700;
+      letter-spacing: -2px;
+      line-height: 1.1;
+      color: var(--text);
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .date {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 28px;
+      text-align: center;
+      letter-spacing: 0.3px;
+    }
+
+    /* ===== SEARCH BAR ===== */
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(20, 20, 20, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 0 18px;
+      width: min(620px, 100%);
+      height: 54px;
+      margin-bottom: 32px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .search-box:focus-within {
+      border-color: #444;
+      background: var(--bg3);
+    }
+
+    .search-box i {
+      color: var(--muted);
+      font-size: 15px;
+      flex: 0 0 auto;
+    }
+
+    .search-box input {
+      flex: 1;
+      min-width: 0;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .search-box input::placeholder {
+      color: #555;
+    }
+
+    /* ===== PRESET CARDS (shortcuts) ===== */
+    .shortcuts {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+      gap: 18px 12px;
+      max-width: 640px;
+      width: 100%;
+      justify-items: center;
+    }
+
+    .shortcut {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      cursor: pointer;
+      width: 72px;
+    }
+
+    .shortcut-icon {
+      width: 52px;
+      height: 52px;
+      background: rgba(20, 20, 20, 0.72);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.18s ease;
+    }
+
+    .shortcut:hover .shortcut-icon {
+      background: var(--panel2);
+      border-color: #444;
+      transform: translateY(-2px);
+    }
+
+    .shortcut-icon img {
+      width: 24px;
+      height: 24px;
+      filter: brightness(0) invert(0.75);
+      transition: filter 0.18s;
+    }
+
+    .shortcut:hover .shortcut-icon img {
+      filter: brightness(0) invert(1);
+    }
+
+    .shortcut-icon i {
+      font-size: 20px;
+      color: var(--muted);
+    }
+
+    .shortcut-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+      max-width: 72px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      transition: color 0.15s;
+    }
+
+    .shortcut:hover .shortcut-label {
+      color: var(--text);
+    }
+
+    /* ===== LOADER ===== */
+    .loader {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .loader.show {
+      display: flex;
+    }
+
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 480px) {
+      .clock {
+        font-size: 2.8rem;
+      }
+
+      .shortcuts {
+        grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+        gap: 14px 8px;
+      }
+
+      .shortcut {
+        width: 64px;
+      }
+
+      .shortcut-icon {
+        width: 48px;
+        height: 48px;
+      }
+
+      .shortcut-icon img {
+        width: 22px;
+        height: 22px;
+      }
+
+      .search-box {
+        height: 48px;
+        padding: 0 14px;
+        border-radius: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Loader overlay -->
+  <div class="loader" id="loader">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Veil mark -->
+  <div class="veil-mark">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M50 14L81 27V47C81 69 68 84 50 91C32 84 19 69 19 47V27L50 14Z" stroke="currentColor" stroke-width="8" stroke-linejoin="round"/>
+    </svg>
+  </div>
+
+  <!-- Live clock -->
+  <div class="clock" id="clock">00:00:00</div>
+
+  <!-- Date -->
+  <div class="date" id="date"></div>
+
+  <!-- Search bar (engine selection handled by top bar / index.html) -->
+  <form class="search-box" id="searchForm" autocomplete="off">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <input type="text" id="searchInput" placeholder="Search the web..." autocomplete="off" spellcheck="false">
+  </form>
+
+  <!-- Preset shortcut cards -->
+  <div class="shortcuts" id="shortcuts">
+    <!-- YouTube -->
+    <a class="shortcut" data-url="https://www.youtube.com/" title="YouTube">
+      <div class="shortcut-icon">
+        <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/youtube.svg" alt="YouTube">
+      </div>
+      <span class="shortcut-label">YouTube</span>
+    </a>
+
+    <!-- GitHub -->
+    <a class="shortcut" data-url="https://github.com/" title="GitHub">
+      <div class="shortcut-icon">
+        <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/github.svg" alt="GitHub">
+      </div>
+      <span class="shortcut-label">GitHub</span>
+    </a>
+
+    <!-- Discord -->
+    <a class="shortcut" data-url="https://discord.com/" title="Discord">
+      <div class="shortcut-icon">
+        <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/discord.svg" alt="Discord">
+      </div>
+      <span class="shortcut-label">Discord</span>
+    </a>
+
+    <!-- GeForce NOW -->
+    <a class="shortcut" data-url="https://play.geforcenow.com/mall/" title="GeForce NOW">
+      <div class="shortcut-icon">
+        <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/nvidia.svg" alt="GeForce NOW">
+      </div>
+      <span class="shortcut-label">GeForce NOW</span>
+    </a>
+
+    <!-- X (Twitter) -->
+    <a class="shortcut" data-url="https://x.com/home" title="X">
+      <div class="shortcut-icon">
+        <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/x.svg" alt="X">
+      </div>
+      <span class="shortcut-label">X</span>
+    </a>
+
+    <!-- TikTok -->
+    <a class="shortcut" data-url="https://www.tiktok.com/en/" title="TikTok">
+      <div class="shortcut-icon">
+        <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/tiktok.svg" alt="TikTok">
+      </div>
+      <span class="shortcut-label">TikTok</span>
+    </a>
+
+    <!-- Instagram -->
+    <a class="shortcut" data-url="https://www.instagram.com/" title="Instagram">
+      <div class="shortcut-icon">
+        <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/instagram.svg" alt="Instagram">
+      </div>
+      <span class="shortcut-label">Instagram</span>
+    </a>
+
+    <!-- DeepSeek -->
+    <a class="shortcut" data-url="https://chat.deepseek.com/" title="DeepSeek">
+      <div class="shortcut-icon">
+        <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/openai.svg" alt="DeepSeek">
+      </div>
+      <span class="shortcut-label">DeepSeek</span>
+    </a>
+
+    <!-- Reddit -->
+    <a class="shortcut" data-url="https://www.reddit.com/" title="Reddit">
+      <div class="shortcut-icon">
+        <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/reddit.svg" alt="Reddit">
+      </div>
+      <span class="shortcut-label">Reddit</span>
+    </a>
+
+    <!-- Twitch -->
+    <a class="shortcut" data-url="https://www.twitch.tv/" title="Twitch">
+      <div class="shortcut-icon">
+        <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/twitch.svg" alt="Twitch">
+      </div>
+      <span class="shortcut-label">Twitch</span>
+    </a>
+
+    <!-- Kick -->
+    <a class="shortcut" data-url="https://kick.com/" title="Kick">
+      <div class="shortcut-icon">
+        <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/kick.svg" alt="Kick">
+      </div>
+      <span class="shortcut-label">Kick</span>
+    </a>
+  </div>
+
+  <script>
+    (function() {
+      "use strict";
+
+      // ---------- DOM refs ----------
+      const $ = s => document.querySelector(s);
+      const clockEl = $('#clock');
+      const dateEl = $('#date');
+      const searchForm = $('#searchForm');
+      const searchInput = $('#searchInput');
+      const shortcutsContainer = $('#shortcuts');
+      const loader = $('#loader');
+
+      // ---------- Navigation helper ----------
+      const nav = url => {
+        // Show loader while navigating
+        loader.classList.add('show');
+        // Try to use parent postMessage (Veil browser integration)
+        // Fallback to direct location if not in an iframe
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'navigate', url }, '*');
+        } else {
+          window.location.href = url;
+        }
+      };
+
+      // ---------- Clock & Date (HH:MM:SS 12hr default) ----------
+      function updateClock() {
+        const now = new Date();
+
+        // Time: 12-hour with seconds
+        let hours = now.getHours();
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // 0 -> 12
+        const hoursStr = String(hours).padStart(2, '0');
+        clockEl.textContent = `${hoursStr}:${minutes}:${seconds} ${ampm}`;
+
+        // Date: "Thursday, September 10"
+        const weekday = now.toLocaleDateString('en-US', { weekday: 'long' });
+        const month = now.toLocaleDateString('en-US', { month: 'long' });
+        const day = now.getDate();
+        dateEl.textContent = `${weekday}, ${month} ${day}`;
+      }
+
+      updateClock();
+      setInterval(updateClock, 1000);
+
+      // ---------- Search form submission ----------
+      // Engine is selected in the top bar (index.html) and communicated
+      // via postMessage. We listen for the engine setting so the search
+      // uses the user's preferred engine.
+      let currentEngine = 'https://search.brave.com/search?q=';
+
+      window.addEventListener('message', (event) => {
+        // Accept engine updates from the parent Veil browser shell
+        if (event.data && event.data.type === 'set-search-engine') {
+          currentEngine = event.data.url;
+        }
+        // Also handle direct search requests if needed
+        if (event.data && event.data.type === 'search') {
+          const q = event.data.query;
+          if (q) nav(currentEngine + encodeURIComponent(q));
+        }
+      });
+
+      searchForm.addEventListener('submit', e => {
+        e.preventDefault();
+        const query = searchInput.value.trim();
+        if (!query) return;
+        nav(currentEngine + encodeURIComponent(query));
+      });
+
+      // ---------- Shortcut card click handling ----------
+      shortcutsContainer.addEventListener('click', e => {
+        const shortcut = e.target.closest('.shortcut[data-url]');
+        if (!shortcut) return;
+        e.preventDefault();
+        const url = shortcut.dataset.url;
+        if (url) nav(url);
+      });
+
+      // ---------- Hide loader on page load ----------
+      window.addEventListener('load', () => {
+        loader.classList.remove('show');
+      });
+
+      window.addEventListener('pageshow', () => {
+        loader.classList.remove('show');
+      });
+
+    })();
+  </script>
+
+</body>
+</html>
