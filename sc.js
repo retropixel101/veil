@@ -1,6 +1,4 @@
-// =====================================================
-// VEIL CONFIGURATION
-// =====================================================
+import * as BareMux from "./bm/index.mjs";
 
 const WISP_SERVERS = [
     {
@@ -21,2732 +19,1016 @@ const WISP_SERVERS = [
     }
 ];
 
-// First server is the default Veil server.
-const DEFAULT_WISP = WISP_SERVERS[0].url;
-
-
-// =====================================================
-// VEIL LOCAL ASSETS
-// =====================================================
-
 const VEIL_ASSETS = {
     scramjetAll: "sj/scramjet.all.js",
     scramjetSync: "sj/scramjet.sync.js",
     scramjetWasm: "sj/scramjet.wasm.wasm",
-
     epoxy: "ep/index.mjs",
     baremuxWorker: "bm/worker.js",
-
     serviceWorker: "sw.js"
 };
 
-
-// =====================================================
-// WISP STORAGE
-// =====================================================
-
-const getStoredWisps = () => {
-    try {
-        const stored = JSON.parse(
-            localStorage.getItem("customWisps") || "[]"
-        );
-
-        return Array.isArray(stored) ? stored : [];
-    } catch {
-        return [];
-    }
-};
-
-
-// Normalize user-entered server URLs.
-//
-// Accepts:
-//
-// https://example.com
-// http://example.com
-// wss://example.com
-// ws://example.com
-//
-// Internally Veil uses Wisp WebSocket URLs.
-function normalizeWispUrl(url) {
-    let value = String(url || "").trim();
-
-    if (!value) {
-        return "";
-    }
-
-    if (value.startsWith("https://")) {
-        value = "wss://" + value.slice(8);
-    } else if (value.startsWith("http://")) {
-        value = "ws://" + value.slice(7);
-    }
-
-    return value.replace(/\/+$/, "");
-};
-
-
-// Return every available server.
-function getAllWispServers() {
-    return [
-        ...WISP_SERVERS,
-        ...getStoredWisps()
-    ];
-};
-
-
-// Make sure an existing old server selection does not survive.
-function initializeWispStorage() {
-    const stored = localStorage.getItem("proxServer");
-
-    // Remove the old GLSeries server if it was previously saved.
-    if (
-        !stored ||
-        stored.includes("glseries.net")
-    ) {
-        localStorage.setItem(
-            "proxServer",
-            DEFAULT_WISP
-        );
-    }
-}
-
-initializeWispStorage();
-
-
-// =====================================================
-// SERVER HEALTH CHECKING
-// =====================================================
-
-async function pingWispServer(
-    url,
-    timeout = 2500
-) {
-    return new Promise((resolve) => {
-
-        const normalized = normalizeWispUrl(url);
-        const start = Date.now();
-
-        let finished = false;
-
-        const finish = (result) => {
-            if (finished) return;
-
-            finished = true;
-            resolve(result);
-        };
-
-        try {
-
-            const ws = new WebSocket(normalized);
-
-            const timer = setTimeout(() => {
-
-                try {
-                    ws.close();
-                } catch {}
-
-                finish({
-                    url: normalized,
-                    success: false,
-                    latency: null
-                });
-
-            }, timeout);
-
-            ws.onopen = () => {
-
-                clearTimeout(timer);
-
-                const latency =
-                    Date.now() - start;
-
-                try {
-                    ws.close();
-                } catch {}
-
-                finish({
-                    url: normalized,
-                    success: true,
-                    latency
-                });
-            };
-
-            ws.onerror = () => {
-
-                clearTimeout(timer);
-
-                try {
-                    ws.close();
-                } catch {}
-
-                finish({
-                    url: normalized,
-                    success: false,
-                    latency: null
-                });
-            };
-
-            ws.onclose = () => {
-
-                if (!finished) {
-                    clearTimeout(timer);
-
-                    finish({
-                        url: normalized,
-                        success: false,
-                        latency: null
-                    });
-                }
-            };
-
-        } catch {
-
-            finish({
-                url: normalized,
-                success: false,
-                latency: null
-            });
-        }
-    });
-};
-
-
-// =====================================================
-// FIND FASTEST WORKING SERVER
-// =====================================================
-
-async function findBestWispServer(
-    servers,
-    currentUrl
-) {
-    if (
-        !servers ||
-        servers.length === 0
-    ) {
-        return currentUrl;
-    }
-
-    const results = await Promise.all(
-        servers.map(server =>
-            pingWispServer(
-                server.url,
-                2500
-            )
-        )
-    );
-
-    const working = results
-        .filter(result => result.success)
-        .sort(
-            (a, b) =>
-                a.latency - b.latency
-        );
-
-    if (working.length > 0) {
-        return working[0].url;
-    }
-
-    return (
-        currentUrl ||
-        DEFAULT_WISP
-    );
-};
-
-
-// =====================================================
-// AUTOMATIC SERVER SELECTION
-// =====================================================
-
-async function initializeWithBestServer() {
-
-    const autoswitch =
-        localStorage.getItem(
-            "wispAutoswitch"
-        ) !== "false";
-
-    if (!autoswitch) {
-        return;
-    }
-
-    const servers =
-        getAllWispServers();
-
-    if (servers.length <= 1) {
-        return;
-    }
-
-    const currentUrl =
-        normalizeWispUrl(
-            localStorage.getItem(
-                "proxServer"
-            ) || DEFAULT_WISP
-        );
-
-    const currentCheck =
-        await pingWispServer(
-            currentUrl,
-            2500
-        );
-
-    if (currentCheck.success) {
-
-        console.log(
-            "Veil: current Wisp is working:",
-            currentUrl,
-            `${currentCheck.latency}ms`
-        );
-
-        return;
-    }
-
-    console.warn(
-        "Veil: current Wisp is unavailable. Searching for another server..."
-    );
-
-    const best =
-        await findBestWispServer(
-            servers,
-            currentUrl
-        );
-
-    if (
-        best &&
-        best !== currentUrl
-    ) {
-
-        localStorage.setItem(
-            "proxServer",
-            best
-        );
-
-        const server =
-            servers.find(
-                item =>
-                    item.url === best
-            );
-
-        notify(
-            "info",
-            "Server Changed",
-            `Using ${server?.name || "another Veil server"}`
-        );
-    }
-}
-
-
-// =====================================================
-// BAREMUX
-// =====================================================
-
-const BareMux =
-    window.BareMux ?? {
-        BareMuxConnection:
-            class {
-                async setTransport() {}
-            }
-    };
-
-
-// =====================================================
-// SHARED BROWSER ENGINE
-// =====================================================
-
-let sharedScramjet = null;
-
+const HOME_PAGE = new URL("./home.html", location.href).href;
+const WISP_STORAGE_KEY = "veil-current-wisp";
+const CUSTOM_WISP_STORAGE_KEY = "veil-custom-wisp";
+
+let currentWisp = null;
 let sharedConnection = null;
-
-let sharedConnectionReady = false;
-
-let tabs = [];
-
+let sharedScramjet = null;
+let browserInitialized = false;
+let tabCounter = 0;
 let activeTabId = null;
 
-let nextTabId = 1;
+const tabs = new Map();
 
-
-// =====================================================
-// UTILITIES
-// =====================================================
-
-const getBasePath = () => {
-
-    const path =
-        location.pathname.replace(
-            /[^/]*$/,
-            ""
-        );
-
-    return path.endsWith("/")
-        ? path
-        : path + "/";
-};
-
-
-const getActiveTab = () =>
-    tabs.find(
-        tab =>
-            tab.id === activeTabId
-    );
-
-
-const notify = (
-    type,
-    title,
-    message
-) => {
-
-    if (
-        typeof Notify !==
-        "undefined" &&
-        Notify[type]
-    ) {
-        Notify[type](
-            title,
-            message
-        );
-    }
-};
-
-
-// =====================================================
-// SCRAMJET INITIALIZATION
-// =====================================================
-
-async function getSharedScramjet() {
-
-    if (sharedScramjet) {
-        return sharedScramjet;
-    }
-
-    const basePath =
-        getBasePath();
-
-    if (
-        typeof $scramjetLoadController !==
-        "function"
-    ) {
-        throw new Error(
-            "Veil Scramjet controller could not be loaded."
-        );
-    }
-
-    const {
-        ScramjetController
-    } = $scramjetLoadController();
-
-    sharedScramjet =
-        new ScramjetController({
-
-            prefix:
-                basePath +
-                "service/",
-
-            files: {
-
-                wasm:
-                    basePath +
-                    VEIL_ASSETS.scramjetWasm,
-
-                all:
-                    basePath +
-                    VEIL_ASSETS.scramjetAll,
-
-                sync:
-                    basePath +
-                    VEIL_ASSETS.scramjetSync
-            }
-        });
-
-    try {
-
-        await sharedScramjet.init();
-
-    } catch (err) {
-
-        const message =
-            String(
-                err?.message ||
-                err
-            );
-
-        if (
-            message.includes(
-                "IDBDatabase"
-            ) ||
-            message.includes(
-                "object stores"
-            )
-        ) {
-
-            console.warn(
-                "Veil: Scramjet IndexedDB error. Clearing database..."
-            );
-
-            try {
-
-                const dbNames = [
-                    "scramjet-data",
-                    "scrambase",
-                    "ScramjetData"
-                ];
-
-                for (
-                    const dbName
-                    of dbNames
-                ) {
-
-                    const request =
-                        indexedDB.deleteDatabase(
-                            dbName
-                        );
-
-                    request.onsuccess =
-                        () =>
-                            console.log(
-                                `Veil: cleared ${dbName}`
-                            );
-
-                    request.onerror =
-                        () =>
-                            console.warn(
-                                `Veil: failed to clear ${dbName}`
-                            );
-                }
-
-            } catch (clearError) {
-
-                console.warn(
-                    "Veil: could not clear IndexedDB:",
-                    clearError
-                );
-            }
-
-            sharedScramjet = null;
-
-            return getSharedScramjet();
-        }
-
-        throw err;
-    }
-
-    return sharedScramjet;
+function getBasePath() {
+    return new URL("./", location.href).href;
 }
 
+function normalizeWisp(url) {
+    if (!url) return "";
 
-// =====================================================
-// BAREMUX / EPOXY INITIALIZATION
-// =====================================================
+    url = url.trim();
+
+    if (!url) return "";
+
+    if (url.startsWith("http://")) {
+        url = "ws://" + url.slice(7);
+    } else if (url.startsWith("https://")) {
+        url = "wss://" + url.slice(8);
+    }
+
+    return url.replace(/\/+$/, "");
+}
+
+function getStoredCustomWisp() {
+    try {
+        return normalizeWisp(
+            localStorage.getItem(CUSTOM_WISP_STORAGE_KEY) || ""
+        );
+    } catch {
+        return "";
+    }
+}
+
+function getCurrentWisp() {
+    return currentWisp || normalizeWisp(
+        localStorage.getItem(WISP_STORAGE_KEY)
+    ) || WISP_SERVERS[0].url;
+}
+
+function saveCurrentWisp(url) {
+    currentWisp = normalizeWisp(url);
+
+    try {
+        localStorage.setItem(WISP_STORAGE_KEY, currentWisp);
+    } catch {}
+
+    notifyServiceWorker();
+}
+
+async function notifyServiceWorker() {
+    try {
+        const registration = await navigator.serviceWorker.getRegistration();
+
+        if (!registration) return;
+
+        const worker =
+            navigator.serviceWorker.controller ||
+            registration.active ||
+            registration.waiting ||
+            registration.installing;
+
+        if (!worker) return;
+
+        worker.postMessage({
+            type: "veil-config",
+            wisp: getCurrentWisp()
+        });
+    } catch (error) {
+        console.warn("Unable to update service worker Wisp:", error);
+    }
+}
+
+async function checkWisp(url) {
+    return new Promise(resolve => {
+        let socket;
+
+        try {
+            socket = new WebSocket(normalizeWisp(url));
+
+            const timeout = setTimeout(() => {
+                try {
+                    socket.close();
+                } catch {}
+
+                resolve(false);
+            }, 5000);
+
+            socket.addEventListener("open", () => {
+                clearTimeout(timeout);
+
+                try {
+                    socket.close();
+                } catch {}
+
+                resolve(true);
+            });
+
+            socket.addEventListener("error", () => {
+                clearTimeout(timeout);
+                resolve(false);
+            });
+
+            socket.addEventListener("close", event => {
+                if (event.wasClean) {
+                    clearTimeout(timeout);
+                    resolve(true);
+                }
+            });
+        } catch {
+            resolve(false);
+        }
+    });
+}
+
+async function initializeWithBestServer() {
+    const stored = normalizeWisp(
+        localStorage.getItem(WISP_STORAGE_KEY) || ""
+    );
+
+    const custom = getStoredCustomWisp();
+
+    const candidates = [];
+
+    if (stored) {
+        candidates.push(stored);
+    }
+
+    if (custom && !candidates.includes(custom)) {
+        candidates.push(custom);
+    }
+
+    for (const server of WISP_SERVERS) {
+        const url = normalizeWisp(server.url);
+
+        if (!candidates.includes(url)) {
+            candidates.push(url);
+        }
+    }
+
+    for (const url of candidates) {
+        if (await checkWisp(url)) {
+            saveCurrentWisp(url);
+            return url;
+        }
+    }
+
+    saveCurrentWisp(candidates[0] || WISP_SERVERS[0].url);
+
+    return getCurrentWisp();
+}
+
+async function registerServiceWorker() {
+    if (!("serviceWorker" in navigator)) {
+        throw new Error("Service workers are not supported.");
+    }
+
+    const registration = await navigator.serviceWorker.register(
+        VEIL_ASSETS.serviceWorker,
+        {
+            scope: "./"
+        }
+    );
+
+    await navigator.serviceWorker.ready;
+
+    await notifyServiceWorker();
+
+    return registration;
+}
 
 async function getSharedConnection() {
-
-    if (
-        sharedConnectionReady &&
-        sharedConnection
-    ) {
+    if (sharedConnection) {
         return sharedConnection;
     }
 
-    const basePath =
-        getBasePath();
+    sharedConnection = new BareMux.BareMuxConnection(
+        getBasePath() + VEIL_ASSETS.baremuxWorker
+    );
 
-    const wispUrl =
-        normalizeWispUrl(
-            localStorage.getItem(
-                "proxServer"
-            ) || DEFAULT_WISP
-        );
+    await setBareMuxTransport();
 
-    sharedConnection =
-        new BareMux.BareMuxConnection(
-            basePath +
-            VEIL_ASSETS.baremuxWorker
-        );
+    return sharedConnection;
+}
+
+async function setBareMuxTransport() {
+    if (!sharedConnection) return;
+
+    const wispUrl = getCurrentWisp();
 
     await sharedConnection.setTransport(
-        basePath +
-        VEIL_ASSETS.epoxy,
+        getBasePath() + VEIL_ASSETS.epoxy,
         [
             {
                 wisp: wispUrl
             }
         ]
     );
-
-    sharedConnectionReady = true;
-
-    console.log(
-        "Veil: Epoxy transport initialized.",
-        wispUrl
-    );
-
-    return sharedConnection;
 }
 
-
-// =====================================================
-// BROWSER UI
-// =====================================================
-
-async function initializeBrowser() {
-
-    const root =
-        document.getElementById(
-            "app"
-        );
-
-    if (!root) {
-        throw new Error(
-            "Veil browser root #app was not found."
-        );
+async function getSharedScramjet() {
+    if (sharedScramjet) {
+        return sharedScramjet;
     }
 
-    root.innerHTML = `
-        <div class="browser-container">
+    if (typeof ScramjetController === "undefined") {
+        throw new Error("ScramjetController is unavailable.");
+    }
 
-            <div
-                class="flex tabs"
-                id="tabs-container"
-            ></div>
+    const basePath = getBasePath();
 
-            <div class="flex nav">
+    sharedScramjet = new ScramjetController({
+        prefix: basePath + "service/",
+        files: {
+            wasm: basePath + VEIL_ASSETS.scramjetWasm,
+            all: basePath + VEIL_ASSETS.scramjetAll,
+            sync: basePath + VEIL_ASSETS.scramjetSync
+        }
+    });
 
-                <button
-                    id="back-btn"
-                    title="Back"
-                >
-                    <i class="fa-solid fa-chevron-left"></i>
-                </button>
+    return sharedScramjet;
+}
 
-                <button
-                    id="fwd-btn"
-                    title="Forward"
-                >
-                    <i class="fa-solid fa-chevron-right"></i>
-                </button>
+function $(selector) {
+    return document.querySelector(selector);
+}
 
-                <button
-                    id="reload-btn"
-                    title="Reload"
-                >
-                    <i class="fa-solid fa-rotate-right"></i>
-                </button>
+function createTabId() {
+    tabCounter++;
+    return `tab-${Date.now()}-${tabCounter}`;
+}
 
-                <div class="address-wrapper">
+function createTabElement(id) {
+    const tab = document.createElement("div");
 
-                    <input
-                        class="bar"
-                        id="address-bar"
-                        autocomplete="off"
-                        placeholder="Search or enter URL"
-                    >
+    tab.className = "tab";
+    tab.dataset.tabId = id;
 
-                    <button
-                        id="home-btn-nav"
-                        title="Home"
-                    >
-                        <i class="fa-solid fa-house"></i>
-                    </button>
-
-                </div>
-
-                <button
-                    id="devtools-btn"
-                    title="DevTools"
-                >
-                    <i class="fa-solid fa-code"></i>
-                </button>
-
-                <button
-                    id="wisp-settings-btn"
-                    title="Veil Servers"
-                >
-                    <i class="fa-solid fa-server"></i>
-                </button>
-
-            </div>
-
-            <div class="loading-bar-container">
-                <div
-                    class="loading-bar"
-                    id="loading-bar"
-                ></div>
-            </div>
-
-            <div
-                class="iframe-container"
-                id="iframe-container"
-            >
-
-                <div
-                    id="loading"
-                    class="message-container"
-                    style="display:none;"
-                >
-
-                    <div class="message-content">
-
-                        <div class="spinner"></div>
-
-                        <h1 id="loading-title">
-                            Connecting
-                        </h1>
-
-                        <p id="loading-url">
-                            Initializing Veil...
-                        </p>
-
-                        <button id="skip-btn">
-                            Skip
-                        </button>
-
-                    </div>
-
-                </div>
-
-                <div
-                    id="error"
-                    class="message-container"
-                    style="display:none;"
-                >
-
-                    <div class="message-content">
-
-                        <h1>
-                            Connection Error
-                        </h1>
-
-                        <p id="error-message">
-                            An error occurred.
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </div>
-
+    tab.innerHTML = `
+        <div class="tab-icon">
+            <i class="fa-solid fa-globe"></i>
         </div>
+
+        <div class="tab-title">New Tab</div>
+
+        <button class="tab-close" title="Close">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
     `;
 
-
-    const elements = {
-
-        backBtn:
-            document.getElementById(
-                "back-btn"
-            ),
-
-        fwdBtn:
-            document.getElementById(
-                "fwd-btn"
-            ),
-
-        reloadBtn:
-            document.getElementById(
-                "reload-btn"
-            ),
-
-        addrBar:
-            document.getElementById(
-                "address-bar"
-            ),
-
-        skipBtn:
-            document.getElementById(
-                "skip-btn"
-            )
-    };
-
-
-    elements.backBtn.onclick =
-        () =>
-            getActiveTab()
-                ?.frame
-                .back();
-
-
-    elements.fwdBtn.onclick =
-        () =>
-            getActiveTab()
-                ?.frame
-                .forward();
-
-
-    elements.reloadBtn.onclick =
-        () =>
-            getActiveTab()
-                ?.frame
-                .reload();
-
-
-    document
-        .getElementById(
-            "home-btn-nav"
-        )
-        .onclick = () => {
-
-            window.location.href =
-                "./index.html";
-        };
-
-
-    document
-        .getElementById(
-            "devtools-btn"
-        )
-        .onclick =
-        toggleDevTools;
-
-
-    document
-        .getElementById(
-            "wisp-settings-btn"
-        )
-        .onclick =
-        openSettings;
-
-
-    elements.skipBtn.onclick =
-        () => {
-
-            const tab =
-                getActiveTab();
-
-            if (!tab) {
-                return;
-            }
-
-            tab.loading = false;
-
-            showIframeLoading(
-                false
-            );
-        };
-
-
-    elements.addrBar.onkeyup =
-        event => {
-
-            if (
-                event.key ===
-                "Enter"
-            ) {
-                handleSubmit();
-            }
-        };
-
-
-    elements.addrBar.onfocus =
-        () =>
-            elements.addrBar.select();
-
-
-    window.addEventListener(
-        "message",
-        event => {
-
-            if (
-                event.data?.type ===
-                "navigate"
-            ) {
-
-                handleSubmit(
-                    event.data.url
-                );
-            }
-        }
-    );
-
-
-    createTab(true);
-
-    checkHashParameters();
-}
-
-
-// =====================================================
-// TAB MANAGEMENT
-// =====================================================
-
-function createTab(
-    makeActive = true
-) {
-
-    const frame =
-        sharedScramjet.createFrame();
-
-    const tab = {
-
-        id:
-            nextTabId++,
-
-        title:
-            "New Tab",
-
-        url:
-            "NT.html",
-
-        frame,
-
-        loading:
-            false,
-
-        favicon:
-            null,
-
-        skipTimeout:
-            null,
-
-        loadStartTime:
-            null
-    };
-
-
-    frame.frame.src =
-        "NT.html";
-
-
-    frame.addEventListener(
-        "urlchange",
-        event => {
-
-            tab.url =
-                event.url;
-
-            tab.loading =
-                true;
-
-            tab.loadStartTime =
-                Date.now();
-
-
-            if (
-                tab.id ===
-                activeTabId
-            ) {
-
-                showIframeLoading(
-                    true,
-                    tab.url
-                );
-            }
-
-
-            try {
-
-                const url =
-                    new URL(
-                        event.url
-                    );
-
-                tab.title =
-                    url.hostname;
-
-                tab.favicon =
-                    `https://www.google.com/s2/favicons?domain=${encodeURIComponent(
-                        url.hostname
-                    )}&sz=32`;
-
-            } catch {
-
-                tab.title =
-                    "Browsing";
-
-                tab.favicon =
-                    null;
-            }
-
-
-            updateTabsUI();
-
-            updateAddressBar();
-
-            updateLoadingBar(
-                tab,
-                10
-            );
-
-
-            if (
-                tab.skipTimeout
-            ) {
-                clearTimeout(
-                    tab.skipTimeout
-                );
-            }
-
-
-            tab.skipTimeout =
-                setTimeout(
-                    () => {
-
-                        if (
-                            tab.loading &&
-                            tab.id ===
-                            activeTabId
-                        ) {
-
-                            const button =
-                                document.getElementById(
-                                    "skip-btn"
-                                );
-
-                            if (button) {
-                                button.style.display =
-                                    "inline-block";
-                            }
-                        }
-
-                    },
-                    3000
-                );
-        }
-    );
-
-
-    frame.frame.addEventListener(
-        "load",
-        () => {
-
-            tab.loading =
-                false;
-
-            clearTimeout(
-                tab.skipTimeout
-            );
-
-
-            if (
-                tab.id ===
-                activeTabId
-            ) {
-
-                showIframeLoading(
-                    false
-                );
-            }
-
-
-            try {
-
-                const title =
-                    frame.frame
-                        .contentWindow
-                        .document
-                        .title;
-
-                if (title) {
-                    tab.title =
-                        title;
-                }
-
-            } catch {}
-
-
-            try {
-
-                if (
-                    frame.frame
-                        .contentWindow
-                        .location
-                        .href
-                        .includes(
-                            "NT.html"
-                        )
-                ) {
-
-                    tab.title =
-                        "New Tab";
-
-                    tab.url =
-                        "";
-
-                    tab.favicon =
-                        null;
-                }
-
-            } catch {}
-
-
-            updateTabsUI();
-
-            updateAddressBar();
-
-            updateLoadingBar(
-                tab,
-                100
-            );
-        }
-    );
-
-
-    tabs.push(tab);
-
-
-    document
-        .getElementById(
-            "iframe-container"
-        )
-        .appendChild(
-            frame.frame
-        );
-
-
-    if (makeActive) {
-        switchTab(tab.id);
-    }
-
+    tab.addEventListener("click", event => {
+        if (event.target.closest(".tab-close")) return;
+        switchTab(id);
+    });
+
+    tab.querySelector(".tab-close").addEventListener("click", event => {
+        event.stopPropagation();
+        closeTab(id);
+    });
 
     return tab;
 }
 
+function updateTabTitle(id, title) {
+    const tab = tabs.get(id);
 
-// =====================================================
-// LOADING UI
-// =====================================================
+    if (!tab) return;
 
-function showIframeLoading(
-    show,
-    url = ""
-) {
+    const element = tab.element.querySelector(".tab-title");
 
-    const loader =
-        document.getElementById(
-            "loading"
-        );
-
-    if (!loader) {
-        return;
-    }
-
-
-    loader.style.display =
-        show
-            ? "flex"
-            : "none";
-
-
-    const active =
-        getActiveTab();
-
-
-    active?.frame?.frame
-        ?.classList
-        .toggle(
-            "loading",
-            show
-        );
-
-
-    if (show) {
-
-        document.getElementById(
-            "loading-title"
-        ).textContent =
-            "Connecting";
-
-
-        document.getElementById(
-            "loading-url"
-        ).textContent =
-            url ||
-            "Loading content...";
-
-
-        document.getElementById(
-            "skip-btn"
-        ).style.display =
-            "none";
+    if (element) {
+        element.textContent =
+            title ||
+            "New Tab";
     }
 }
 
+function updateTabIcon(id, url) {
+    const tab = tabs.get(id);
 
-// =====================================================
-// SWITCH TAB
-// =====================================================
+    if (!tab) return;
 
-function switchTab(
-    tabId
-) {
+    const icon = tab.element.querySelector(".tab-icon");
 
-    activeTabId =
-        tabId;
+    if (!icon) return;
 
-    const tab =
-        getActiveTab();
+    icon.innerHTML = `<i class="fa-solid fa-globe"></i>`;
 
-
-    tabs.forEach(
-        current => {
-
-            current.frame
-                .frame
-                .classList
-                .toggle(
-                    "hidden",
-                    current.id !==
-                    tabId
-                );
-        }
-    );
-
-
-    if (tab) {
-
-        showIframeLoading(
-            tab.loading,
-            tab.url
-        );
-
-
-        const skip =
-            document.getElementById(
-                "skip-btn"
-            );
-
+    try {
+        const parsed = new URL(url);
 
         if (
-            tab.loading &&
-            tab.loadStartTime &&
-            skip
+            parsed.protocol === "http:" ||
+            parsed.protocol === "https:"
         ) {
+            const img = document.createElement("img");
 
-            const elapsed =
-                Date.now() -
-                tab.loadStartTime;
+            img.src =
+                `https://www.google.com/s2/favicons?domain=${encodeURIComponent(
+                    parsed.hostname
+                )}&sz=32`;
 
+            img.alt = "";
 
-            if (
-                elapsed >
-                3000
-            ) {
+            img.addEventListener("error", () => {
+                icon.innerHTML =
+                    `<i class="fa-solid fa-globe"></i>`;
+            });
 
-                skip.style.display =
-                    "inline-block";
-            }
+            icon.innerHTML = "";
+            icon.appendChild(img);
         }
-    }
-
-
-    updateTabsUI();
-
-    updateAddressBar();
+    } catch {}
 }
 
+function updateAddressBar(id) {
+    if (activeTabId !== id) return;
 
-// =====================================================
-// CLOSE TAB
-// =====================================================
+    const tab = tabs.get(id);
 
-function closeTab(
-    tabId
-) {
+    if (!tab) return;
 
-    const index =
-        tabs.findIndex(
-            tab =>
-                tab.id ===
-                tabId
-        );
+    const addressBar = $("#address-bar");
 
+    if (!addressBar) return;
 
-    if (index === -1) {
+    let url = "";
+
+    try {
+        url = tab.frame.frame?.src || "";
+    } catch {}
+
+    if (!url || url === "about:blank") {
+        addressBar.value = "";
         return;
     }
 
+    addressBar.value = url;
+}
 
-    const tab =
-        tabs[index];
+function setLoading(visible, title = "Connecting", url = "") {
+    const loading = $("#loading");
 
+    if (!loading) return;
 
-    clearTimeout(
-        tab.skipTimeout
-    );
+    loading.style.display = visible ? "flex" : "none";
 
+    const titleElement = $("#loading-title");
+    const urlElement = $("#loading-url");
 
-    if (tab.frame?.frame) {
-
-        tab.frame.frame.src =
-            "about:blank";
-
-        tab.frame.frame.remove();
+    if (titleElement) {
+        titleElement.textContent = title;
     }
 
-
-    tabs.splice(
-        index,
-        1
-    );
-
-
-    if (
-        activeTabId ===
-        tabId
-    ) {
-
-        if (tabs.length) {
-
-            switchTab(
-                tabs[
-                    Math.max(
-                        0,
-                        index - 1
-                    )
-                ].id
-            );
-
-        } else {
-
-            createTab(true);
-        }
-
-    } else {
-
-        updateTabsUI();
+    if (urlElement) {
+        urlElement.textContent =
+            url || "Initializing proxy...";
     }
 }
 
+function setError(message) {
+    const error = $("#error");
 
-// =====================================================
-// TAB UI
-// =====================================================
+    if (!error) return;
 
-function updateTabsUI() {
+    const messageElement = $("#error-message");
 
-    const container =
-        document.getElementById(
-            "tabs-container"
-        );
-
-    if (!container) {
-        return;
+    if (messageElement) {
+        messageElement.textContent =
+            message || "An error occurred.";
     }
 
-
-    container.innerHTML =
-        "";
-
-
-    tabs.forEach(
-        tab => {
-
-            const element =
-                document.createElement(
-                    "div"
-                );
-
-
-            element.className =
-                `tab ${
-                    tab.id ===
-                    activeTabId
-                        ? "active"
-                        : ""
-                }`;
-
-
-            const icon =
-                tab.loading
-
-                    ? `
-                        <div class="tab-spinner"></div>
-                      `
-
-                    : tab.favicon
-
-                        ? `
-                            <img
-                                src="${tab.favicon}"
-                                class="tab-favicon"
-                                onerror="this.style.display='none'"
-                            >
-                          `
-
-                        : "";
-
-
-            element.innerHTML = `
-                ${icon}
-
-                <span class="tab-title">
-                    ${escapeHtml(
-                        tab.title
-                    )}
-                </span>
-
-                <span class="tab-close">
-                    ×
-                </span>
-            `;
-
-
-            element.onclick =
-                () =>
-                    switchTab(
-                        tab.id
-                    );
-
-
-            element
-                .querySelector(
-                    ".tab-close"
-                )
-                .onclick =
-                event => {
-
-                    event.stopPropagation();
-
-                    closeTab(
-                        tab.id
-                    );
-                };
-
-
-            container.appendChild(
-                element
-            );
-        }
-    );
-
-
-    const newButton =
-        document.createElement(
-            "button"
-        );
-
-
-    newButton.className =
-        "new-tab";
-
-
-    newButton.innerHTML =
-        "+";
-
-
-    newButton.title =
-        "New Tab";
-
-
-    newButton.onclick =
-        () =>
-            createTab(true);
-
-
-    container.appendChild(
-        newButton
-    );
+    error.style.display = "flex";
 }
 
+function clearError() {
+    const error = $("#error");
 
-// Prevent titles from injecting HTML.
-function escapeHtml(value) {
-
-    return String(value)
-        .replaceAll(
-            "&",
-            "&amp;"
-        )
-        .replaceAll(
-            "<",
-            "&lt;"
-        )
-        .replaceAll(
-            ">",
-            "&gt;"
-        )
-        .replaceAll(
-            '"',
-            "&quot;"
-        )
-        .replaceAll(
-            "'",
-            "&#039;"
-        );
-}
-
-
-// =====================================================
-// ADDRESS BAR
-// =====================================================
-
-function updateAddressBar() {
-
-    const bar =
-        document.getElementById(
-            "address-bar"
-        );
-
-    const tab =
-        getActiveTab();
-
-
-    if (
-        bar &&
-        tab
-    ) {
-
-        bar.value =
-            tab.url &&
-            !tab.url.includes(
-                "NT.html"
-            )
-                ? tab.url
-                : "";
+    if (error) {
+        error.style.display = "none";
     }
 }
 
+function setLoadingBar(progress) {
+    const bar = $("#loading-bar");
 
-// =====================================================
-// NAVIGATION
-// =====================================================
+    if (!bar) return;
 
-function handleSubmit(
-    url
-) {
-
-    const tab =
-        getActiveTab();
-
-    if (!tab) {
+    if (progress <= 0) {
+        bar.style.width = "0%";
+        bar.classList.remove("active");
         return;
     }
 
-
-    let input =
-        url ??
-        document
-            .getElementById(
-                "address-bar"
-            )
-            .value
-            .trim();
-
-
-    if (!input) {
-        return;
-    }
-
-
-    if (
-        !/^https?:\/\//i.test(
-            input
-        )
-    ) {
-
-        input =
-            input.includes(".") &&
-            !input.includes(" ")
-
-                ? `https://${input}`
-
-                : `https://search.brave.com/search?q=${encodeURIComponent(
-                    input
-                  )}`;
-    }
-
-
-    tab.loading =
-        true;
-
-
-    showIframeLoading(
-        true,
-        input
-    );
-
-
-    updateLoadingBar(
-        tab,
-        10
-    );
-
-
-    tab.frame.go(
-        input
-    );
-}
-
-
-// =====================================================
-// LOADING BAR
-// =====================================================
-
-function updateLoadingBar(
-    tab,
-    percent
-) {
-
-    if (
-        !tab ||
-        tab.id !==
-        activeTabId
-    ) {
-        return;
-    }
-
-
-    const bar =
-        document.getElementById(
-            "loading-bar"
-        );
-
-
-    if (!bar) {
-        return;
-    }
-
+    bar.classList.add("active");
 
     bar.style.width =
-        `${percent}%`;
-
-
-    bar.style.opacity =
-        percent === 100
-            ? "0"
-            : "1";
-
-
-    if (
-        percent === 100
-    ) {
-
-        setTimeout(
-            () => {
-
-                bar.style.width =
-                    "0%";
-
-            },
-            200
-        );
-    }
+        Math.max(0, Math.min(100, progress)) + "%";
 }
 
-
-// =====================================================
-// SERVER SETTINGS
-// =====================================================
-
-function openSettings() {
-
-    const modal =
-        document.getElementById(
-            "wisp-settings-modal"
-        );
-
-    if (!modal) {
-        return;
-    }
-
-
-    modal.classList.remove(
-        "hidden"
-    );
-
-
-    const close =
-        document.getElementById(
-            "close-wisp-modal"
-        );
-
-
-    if (close) {
-
-        close.onclick =
-            () =>
-                modal.classList.add(
-                    "hidden"
-                );
-    }
-
-
-    const save =
-        document.getElementById(
-            "save-custom-wisp"
-        );
-
-
-    if (save) {
-
-        save.onclick =
-            saveCustomWisp;
-    }
-
-
-    modal.onclick =
-        event => {
-
-            if (
-                event.target ===
-                modal
-            ) {
-
-                modal.classList.add(
-                    "hidden"
-                );
-            }
-        };
-
-
-    renderServerList();
-}
-
-
-// =====================================================
-// SERVER LIST
-// =====================================================
-
-function renderServerList() {
-
-    const list =
-        document.getElementById(
-            "server-list"
-        );
-
-    if (!list) {
-        return;
-    }
-
-
-    list.innerHTML =
-        "";
-
-
-    const currentUrl =
-        normalizeWispUrl(
-            localStorage.getItem(
-                "proxServer"
-            ) ||
-            DEFAULT_WISP
-        );
-
-
-    const servers =
-        getAllWispServers();
-
-
-    servers.forEach(
-        (server, index) => {
-
-            const serverUrl =
-                normalizeWispUrl(
-                    server.url
-                );
-
-
-            const active =
-                serverUrl ===
-                currentUrl;
-
-
-            const isCustom =
-                index >=
-                WISP_SERVERS.length;
-
-
-            const item =
-                document.createElement(
-                    "div"
-                );
-
-
-            item.className =
-                `wisp-option ${
-                    active
-                        ? "active"
-                        : ""
-                }`;
-
-
-            const deleteButton =
-                isCustom
-                    ? `
-                        <button
-                            class="delete-wisp-btn"
-                            data-delete-wisp="${encodeURIComponent(
-                                serverUrl
-                            )}"
-                            title="Remove server"
-                        >
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                      `
-                    : "";
-
-
-            item.innerHTML = `
-                <div class="wisp-option-header">
-
-                    <div class="wisp-option-name">
-
-                        ${escapeHtml(
-                            server.name
-                        )}
-
-                        ${
-                            active
-                                ? `
-                                    <i
-                                        class="fa-solid fa-check"
-                                        style="
-                                            margin-left:8px;
-                                            font-size:.7em;
-                                            color:var(--accent,#fff);
-                                        "
-                                    ></i>
-                                  `
-                                : ""
-                        }
-
-                    </div>
-
-                    <div class="server-status">
-
-                        <span class="ping-text">
-                            Checking...
-                        </span>
-
-                        <div class="status-indicator"></div>
-
-                        ${deleteButton}
-
-                    </div>
-
-                </div>
-
-                <div class="wisp-option-url">
-                    ${escapeHtml(
-                        serverUrl
-                    )}
-                </div>
-            `;
-
-
-            item.onclick =
-                () =>
-                    setWisp(
-                        serverUrl
-                    );
-
-
-            const deleteElement =
-                item.querySelector(
-                    "[data-delete-wisp]"
-                );
-
-
-            if (deleteElement) {
-
-                deleteElement.onclick =
-                    event => {
-
-                        event.stopPropagation();
-
-                        deleteCustomWisp(
-                            serverUrl
-                        );
-                    };
-            }
-
-
-            list.appendChild(
-                item
-            );
-
-
-            checkServerHealth(
-                serverUrl,
-                item
-            );
-        }
-    );
-
-
-    // =================================================
-    // CUSTOM SERVER INPUT
-    // =================================================
-
-    const customSection =
-        document.createElement(
-            "div"
-        );
-
-
-    customSection.className =
-        "wisp-custom-section";
-
-
-    customSection.innerHTML = `
-        <div class="wisp-custom-title">
-            Custom Server
-        </div>
-
-        <div class="wisp-custom-row">
-
-            <input
-                id="custom-wisp-input"
-                class="text-input"
-                type="text"
-                placeholder="https://your-wisp-server.com"
-                autocomplete="off"
-            >
-
-            <button
-                id="save-custom-wisp"
-                class="primary-btn"
-                type="button"
-            >
-                Add
-            </button>
-
-        </div>
-
-        <div class="wisp-custom-help">
-            Enter a Wisp server URL. Veil automatically
-            converts HTTPS URLs to WSS.
-        </div>
-    `;
-
-
-    list.appendChild(
-        customSection
-    );
-
-
-    document
-        .getElementById(
-            "save-custom-wisp"
-        )
-        ?.addEventListener(
-            "click",
-            saveCustomWisp
-        );
-
-
-    // =================================================
-    // AUTO-SWITCH
-    // =================================================
-
-    const autoswitch =
-        localStorage.getItem(
-            "wispAutoswitch"
-        ) !== "false";
-
-
-    const toggle =
-        document.createElement(
-            "div"
-        );
-
-
-    toggle.className =
-        "wisp-option";
-
-
-    toggle.style.cssText =
-        "margin-top:10px;cursor:default;";
-
-
-    toggle.innerHTML = `
-        <div
-            class="wisp-option-header"
-            style="justify-content:space-between;"
-        >
-
-            <div class="wisp-option-name">
-
-                <i
-                    class="fa-solid fa-rotate"
-                    style="margin-right:8px"
-                ></i>
-
-                Auto-switch on failure
-
-            </div>
-
-            <div
-                class="toggle-switch ${
-                    autoswitch
-                        ? "active"
-                        : ""
-                }"
-                id="autoswitch-toggle"
-            >
-
-                <div class="toggle-knob"></div>
-
-            </div>
-
-        </div>
-    `;
-
-
-    toggle.onclick =
-        () => {
-
-            const state =
-                localStorage.getItem(
-                    "wispAutoswitch"
-                ) !== "false";
-
-
-            const next =
-                !state;
-
-
-            localStorage.setItem(
-                "wispAutoswitch",
-                String(next)
-            );
-
-
-            notify(
-                "success",
-                "Settings Saved",
-                `Auto-switch ${
-                    next
-                        ? "enabled"
-                        : "disabled"
-                }`
-            );
-
-
-            renderServerList();
-        };
-
-
-    list.appendChild(
-        toggle
-    );
-}
-
-
-// =====================================================
-// ADD CUSTOM WISP
-// =====================================================
-
-function saveCustomWisp() {
-
-    const input =
-        document.getElementById(
-            "custom-wisp-input"
-        );
-
+function normalizeNavigationInput(input) {
+    input = input.trim();
 
     if (!input) {
-        return;
+        return HOME_PAGE;
     }
-
-
-    const raw =
-        input.value.trim();
-
-
-    if (!raw) {
-        return;
-    }
-
-
-    const url =
-        normalizeWispUrl(
-            raw
-        );
-
 
     if (
-        !/^wss?:\/\//i.test(
-            url
-        )
+        input.startsWith("http://") ||
+        input.startsWith("https://")
     ) {
-
-        notify(
-            "error",
-            "Invalid Server",
-            "Enter a valid Wisp server URL."
-        );
-
-        return;
+        return input;
     }
-
-
-    const builtIn =
-        WISP_SERVERS.some(
-            server =>
-                normalizeWispUrl(
-                    server.url
-                ) === url
-        );
-
-
-    const custom =
-        getStoredWisps();
-
-
-    const alreadyExists =
-        custom.some(
-            server =>
-                normalizeWispUrl(
-                    server.url
-                ) === url
-        );
-
 
     if (
-        builtIn ||
-        alreadyExists
+        input.startsWith("about:") ||
+        input.startsWith("chrome:") ||
+        input.startsWith("file:")
     ) {
-
-        notify(
-            "warning",
-            "Already Exists",
-            "That server is already in Veil."
-        );
-
-        return;
+        return input;
     }
 
+    if (
+        input.includes(" ") ||
+        !input.includes(".")
+    ) {
+        return (
+            "https://www.google.com/search?q=" +
+            encodeURIComponent(input)
+        );
+    }
 
-    const newServer = {
-
-        name:
-            `Custom Server ${custom.length + 1}`,
-
-        url
-    };
-
-
-    custom.push(
-        newServer
-    );
-
-
-    localStorage.setItem(
-        "customWisps",
-        JSON.stringify(
-            custom
-        )
-    );
-
-
-    input.value =
-        "";
-
-
-    setWisp(
-        url
-    );
+    return "https://" + input;
 }
 
+function navigateTab(id, target) {
+    const tab = tabs.get(id);
 
-// =====================================================
-// DELETE CUSTOM SERVER
-// =====================================================
+    if (!tab || !target) return;
 
-window.deleteCustomWisp =
-    function(urlToDelete) {
+    clearError();
 
-        const url =
-            normalizeWispUrl(
-                urlToDelete
-            );
+    setLoading(
+        true,
+        "Connecting",
+        target
+    );
 
-
-        if (
-            !confirm(
-                "Remove this custom server?"
-            )
-        ) {
-            return;
-        }
-
-
-        const remaining =
-            getStoredWisps()
-                .filter(
-                    server =>
-                        normalizeWispUrl(
-                            server.url
-                        ) !== url
-                );
-
-
-        localStorage.setItem(
-            "customWisps",
-            JSON.stringify(
-                remaining
-            )
-        );
-
-
-        if (
-            normalizeWispUrl(
-                localStorage.getItem(
-                    "proxServer"
-                )
-            ) === url
-        ) {
-
-            setWisp(
-                DEFAULT_WISP
-            );
-
-        } else {
-
-            renderServerList();
-        }
-    };
-
-
-// =====================================================
-// SERVER HEALTH
-// =====================================================
-
-async function checkServerHealth(
-    url,
-    element
-) {
-
-    const dot =
-        element.querySelector(
-            ".status-indicator"
-        );
-
-
-    const text =
-        element.querySelector(
-            ".ping-text"
-        );
-
-
-    if (
-        !dot ||
-        !text
-    ) {
-        return;
-    }
-
-
-    const start =
-        Date.now();
-
-
-    const markOffline =
-        () => {
-
-            dot.classList.add(
-                "status-error"
-            );
-
-            text.textContent =
-                "Offline";
-        };
-
+    setLoadingBar(15);
 
     try {
-
-        const result =
-            await pingWispServer(
-                url,
-                2500
-            );
-
-
-        if (
-            result.success
-        ) {
-
-            dot.classList.add(
-                "status-success"
-            );
-
-            text.textContent =
-                `${result.latency}ms`;
-
-        } else {
-
-            markOffline();
-        }
-
+        tab.frame.go(target);
     } catch {
-
-        markOffline();
-    }
-}
-
-
-// =====================================================
-// CHANGE WISP
-// =====================================================
-
-async function setWisp(
-    url
-) {
-
-    const normalized =
-        normalizeWispUrl(
-            url
-        );
-
-
-    if (!normalized) {
-        return;
-    }
-
-
-    const oldUrl =
-        normalizeWispUrl(
-            localStorage.getItem(
-                "proxServer"
-            )
-        );
-
-
-    localStorage.setItem(
-        "proxServer",
-        normalized
-    );
-
-
-    const server =
-        getAllWispServers()
-            .find(
-                item =>
-                    normalizeWispUrl(
-                        item.url
-                    ) === normalized
-            );
-
-
-    if (
-        oldUrl !== normalized
-    ) {
-
-        notify(
-            "success",
-            "Server Changed",
-            `Using ${
-                server?.name ||
-                "Custom Server"
-            }`
-        );
-    }
-
-
-    // Tell the service worker too.
-    //
-    // This is supported by the Veil configuration
-    // message handler when the SW is updated to accept
-    // dynamic Wisp servers.
-    navigator.serviceWorker
-        ?.controller
-        ?.postMessage({
-            type:
-                "config",
-
-            typeLegacy:
-                "veil-config",
-
-            wispurl:
-                normalized
-        });
-
-
-    // Force the connection singleton to use
-    // the newly selected Wisp.
-    sharedConnection =
-        null;
-
-    sharedConnectionReady =
-        false;
-
-
-    setTimeout(
-        () =>
-            location.reload(),
-        350
-    );
-}
-
-
-// =====================================================
-// DEVTOOLS
-// =====================================================
-
-function toggleDevTools() {
-
-    const win =
-        getActiveTab()
-            ?.frame
-            ?.frame
-            ?.contentWindow;
-
-
-    if (!win) {
-        return;
-    }
-
-
-    if (win.eruda) {
-
-        win.eruda.show();
-
-        return;
-    }
-
-
-    try {
-
-        const script =
-            win.document.createElement(
-                "script"
-            );
-
-
-        script.src =
-            "https://cdn.jsdelivr.net/npm/eruda";
-
-
-        script.onload =
-            () => {
-
-                win.eruda.init();
-
-                win.eruda.show();
-            };
-
-
-        win.document.body.appendChild(
-            script
-        );
-
-    } catch (error) {
-
-        console.error(
-            "Veil DevTools error:",
-            error
-        );
-    }
-}
-
-
-// =====================================================
-// HASH NAVIGATION
-// =====================================================
-
-async function checkHashParameters() {
-
-    if (!window.location.hash) {
-        return;
-    }
-
-
-    try {
-
-        const hash =
-            decodeURIComponent(
-                window.location.hash.substring(
-                    1
-                )
-            );
-
-
-        if (hash) {
-            handleSubmit(hash);
+        try {
+            tab.frame.frame.src = target;
+        } catch (error) {
+            setLoading(false);
+            setLoadingBar(0);
+            setError(error.message);
         }
-
-
-        history.replaceState(
-            null,
-            "",
-            location.pathname
-        );
-
-    } catch (error) {
-
-        console.warn(
-            "Veil: invalid hash:",
-            error
-        );
     }
 }
 
+function goHome() {
+    if (!activeTabId) return;
 
-// =====================================================
-// SERVICE WORKER
-// =====================================================
+    const tab = tabs.get(activeTabId);
 
-async function initializeServiceWorker() {
+    if (!tab) return;
 
-    if (
-        !("serviceWorker" in navigator)
-    ) {
-        console.warn(
-            "Veil: Service Workers are unavailable."
-        );
+    clearError();
 
-        return null;
+    setLoading(
+        true,
+        "Loading",
+        HOME_PAGE
+    );
+
+    setLoadingBar(20);
+
+    try {
+        tab.frame.frame.src = HOME_PAGE;
+    } catch {
+        navigateTab(activeTabId, HOME_PAGE);
+    }
+}
+
+function goBack() {
+    const tab = tabs.get(activeTabId);
+
+    if (!tab) return;
+
+    try {
+        tab.frame.back();
+    } catch {
+        try {
+            tab.frame.frame.contentWindow.history.back();
+        } catch {}
+    }
+}
+
+function goForward() {
+    const tab = tabs.get(activeTabId);
+
+    if (!tab) return;
+
+    try {
+        tab.frame.forward();
+    } catch {
+        try {
+            tab.frame.frame.contentWindow.history.forward();
+        } catch {}
+    }
+}
+
+function reloadTab() {
+    const tab = tabs.get(activeTabId);
+
+    if (!tab) return;
+
+    clearError();
+
+    setLoading(
+        true,
+        "Reloading",
+        tab.frame.frame?.src || ""
+    );
+
+    setLoadingBar(20);
+
+    try {
+        tab.frame.reload();
+    } catch {
+        try {
+            tab.frame.frame.src =
+                tab.frame.frame.src;
+        } catch {}
+    }
+}
+
+function createTab(url = HOME_PAGE) {
+    if (!sharedScramjet) {
+        throw new Error("Scramjet has not initialized.");
     }
 
+    const id = createTabId();
 
-    const basePath =
-        getBasePath();
+    const frame = sharedScramjet.createFrame();
 
+    frame.frame.classList.add("veil-frame");
 
-    const registration =
-        await navigator.serviceWorker.register(
-            basePath +
-            VEIL_ASSETS.serviceWorker,
-            {
-                scope:
-                    basePath
-            }
-        );
+    const element = createTabElement(id);
 
+    $("#tabs-container").appendChild(element);
 
-    await navigator.serviceWorker.ready;
+    $("#iframe-container").appendChild(frame.frame);
 
-
-    const wispUrl =
-        normalizeWispUrl(
-            localStorage.getItem(
-                "proxServer"
-            ) ||
-            DEFAULT_WISP
-        );
-
-
-    const servers =
-        getAllWispServers();
-
-
-    const autoswitch =
-        localStorage.getItem(
-            "wispAutoswitch"
-        ) !== "false";
-
-
-    const config = {
-
-        type:
-            "config",
-
-        wispurl:
-            wispUrl,
-
-        servers,
-
-        autoswitch
+    const tab = {
+        id,
+        frame,
+        element,
+        title: "New Tab"
     };
 
+    tabs.set(id, tab);
 
-    const sendConfig =
-        () => {
+    frame.addEventListener("urlchange", event => {
+        let url = "";
 
-            const worker =
-                registration.active ||
-                navigator.serviceWorker.controller;
+        if (event?.url) {
+            url = event.url;
+        } else {
+            try {
+                url = frame.frame.src;
+            } catch {}
+        }
 
+        if (activeTabId === id) {
+            updateAddressBar(id);
+        }
 
-            if (!worker) {
-                return;
-            }
+        if (url) {
+            updateTabIcon(id, url);
 
-
-            worker.postMessage(
-                config
-            );
-        };
-
-
-    sendConfig();
-
-    setTimeout(
-        sendConfig,
-        500
-    );
-
-    setTimeout(
-        sendConfig,
-        1500
-    );
-
-
-    navigator.serviceWorker
-        .addEventListener(
-            "message",
-            event => {
-
-                const data =
-                    event.data;
-
-
-                if (!data) {
-                    return;
-                }
-
+            try {
+                const parsed = new URL(url);
 
                 if (
-                    data.type ===
-                    "wispChanged"
+                    parsed.hostname &&
+                    parsed.hostname !== location.hostname
                 ) {
-
-                    if (
-                        data.url
-                    ) {
-
-                        localStorage.setItem(
-                            "proxServer",
-                            normalizeWispUrl(
-                                data.url
-                            )
-                        );
-                    }
-
-
-                    notify(
-                        "info",
-                        "Server Changed",
-                        `Veil switched to ${
-                            data.name ||
-                            "another server"
-                        }`
-                    );
-
-
-                } else if (
-                    data.type ===
-                    "wispError"
-                ) {
-
-                    console.error(
-                        "Veil Wisp error:",
-                        data
-                    );
-
-
-                    notify(
-                        "error",
-                        "Proxy Error",
-                        data.message ||
-                        "The selected Wisp server failed."
+                    updateTabTitle(
+                        id,
+                        parsed.hostname
                     );
                 }
-            }
-        );
+            } catch {}
+        }
+    });
 
+    frame.addEventListener("load", () => {
+        if (activeTabId === id) {
+            setLoading(false);
+            setLoadingBar(100);
 
-    await registration.update();
+            setTimeout(() => {
+                setLoadingBar(0);
+            }, 250);
 
-
-    return registration;
-}
-
-
-// =====================================================
-// MAIN INITIALIZATION
-// =====================================================
-
-document.addEventListener(
-    "DOMContentLoaded",
-    async () => {
+            updateAddressBar(id);
+        }
 
         try {
+            const title =
+                frame.frame.contentDocument?.title;
 
-            console.log(
-                "Veil: starting..."
-            );
+            if (title) {
+                updateTabTitle(id, title);
+            }
+        } catch {}
+    });
 
+    frame.addEventListener("error", event => {
+        if (activeTabId !== id) return;
 
-            // Remove any old Wisp selection.
-            initializeWispStorage();
+        setLoading(false);
+        setLoadingBar(0);
 
+        setError(
+            event?.message ||
+            "The requested page could not be loaded."
+        );
+    });
 
-            // Try the configured servers.
-            await initializeWithBestServer();
+    switchTab(id);
 
+    try {
+        frame.frame.src = url;
+    } catch {
+        navigateTab(id, url);
+    }
 
-            // Initialize local Scramjet.
-            await getSharedScramjet();
+    return id;
+}
 
+function switchTab(id) {
+    const tab = tabs.get(id);
 
-            // Initialize local Epoxy + BareMux.
-            await getSharedConnection();
+    if (!tab) return;
 
+    activeTabId = id;
 
-            // Register local Veil service worker.
-            await initializeServiceWorker();
+    for (const [tabId, current] of tabs) {
+        const active = tabId === id;
 
+        current.element.classList.toggle(
+            "active",
+            active
+        );
 
-            // Build browser UI.
-            await initializeBrowser();
+        current.frame.frame.style.display =
+            active ? "block" : "none";
+    }
 
+    updateAddressBar(id);
+}
 
-            console.log(
-                "Veil: browser initialized."
-            );
+function closeTab(id) {
+    const tab = tabs.get(id);
 
+    if (!tab) return;
 
-        } catch (error) {
+    const ids = Array.from(tabs.keys());
+    const index = ids.indexOf(id);
 
-            console.error(
-                "Veil initialization error:",
-                error
-            );
+    try {
+        tab.frame.frame.remove();
+    } catch {}
 
+    try {
+        tab.element.remove();
+    } catch {}
 
-            const root =
-                document.getElementById(
-                    "app"
+    tabs.delete(id);
+
+    if (tabs.size === 0) {
+        createTab(HOME_PAGE);
+        return;
+    }
+
+    if (activeTabId === id) {
+        const remaining = Array.from(tabs.keys());
+
+        const next =
+            remaining[
+                Math.max(
+                    0,
+                    Math.min(
+                        index - 1,
+                        remaining.length - 1
+                    )
+                )
+            ];
+
+        switchTab(next);
+    }
+}
+
+function showWispModal() {
+    const modal = $("#wisp-settings-modal");
+
+    if (!modal) return;
+
+    renderWispServers();
+
+    modal.classList.remove("hidden");
+}
+
+function hideWispModal() {
+    const modal = $("#wisp-settings-modal");
+
+    if (modal) {
+        modal.classList.add("hidden");
+    }
+}
+
+function renderWispServers() {
+    const list = $("#server-list");
+
+    if (!list) return;
+
+    list.innerHTML = "";
+
+    const current = getCurrentWisp();
+
+    for (const server of WISP_SERVERS) {
+        const url = normalizeWisp(server.url);
+
+        const button = document.createElement("button");
+
+        button.className =
+            "wisp-server" +
+            (url === current ? " active" : "");
+
+        button.innerHTML = `
+            <span>${server.name}</span>
+            <small>${url}</small>
+        `;
+
+        button.addEventListener("click", async () => {
+            saveCurrentWisp(url);
+
+            try {
+                await setBareMuxTransport();
+            } catch (error) {
+                console.warn(
+                    "Failed to update page BareMux:",
+                    error
+                );
+            }
+
+            renderWispServers();
+        });
+
+        list.appendChild(button);
+    }
+
+    const custom = getStoredCustomWisp();
+
+    if (custom) {
+        const button = document.createElement("button");
+
+        button.className =
+            "wisp-server" +
+            (custom === current ? " active" : "");
+
+        button.innerHTML = `
+            <span>Custom Server</span>
+            <small>${custom}</small>
+        `;
+
+        button.addEventListener("click", async () => {
+            saveCurrentWisp(custom);
+
+            try {
+                await setBareMuxTransport();
+            } catch {}
+
+            renderWispServers();
+        });
+
+        list.appendChild(button);
+    }
+}
+
+async function saveCustomWisp() {
+    const input = $("#custom-wisp-input");
+
+    if (!input) return;
+
+    const value = normalizeWisp(input.value);
+
+    if (!value) return;
+
+    try {
+        localStorage.setItem(
+            CUSTOM_WISP_STORAGE_KEY,
+            value
+        );
+    } catch {}
+
+    saveCurrentWisp(value);
+
+    try {
+        await setBareMuxTransport();
+    } catch (error) {
+        console.warn(
+            "Failed to set custom Wisp:",
+            error
+        );
+    }
+
+    input.value = "";
+
+    renderWispServers();
+}
+
+function openDevTools() {
+    if (window.eruda) {
+        window.eruda.show();
+        return;
+    }
+
+    const script = document.createElement("script");
+
+    script.src =
+        "https://cdn.jsdelivr.net/npm/eruda";
+
+    script.onload = () => {
+        try {
+            window.eruda.init();
+            window.eruda.show();
+        } catch {}
+    };
+
+    document.head.appendChild(script);
+}
+
+function bindNavigation() {
+    $("#back-btn")?.addEventListener(
+        "click",
+        goBack
+    );
+
+    $("#fwd-btn")?.addEventListener(
+        "click",
+        goForward
+    );
+
+    $("#reload-btn")?.addEventListener(
+        "click",
+        reloadTab
+    );
+
+    $("#home-btn-nav")?.addEventListener(
+        "click",
+        goHome
+    );
+
+    $("#devtools-btn")?.addEventListener(
+        "click",
+        openDevTools
+    );
+
+    $("#wisp-settings-btn")?.addEventListener(
+        "click",
+        showWispModal
+    );
+
+    $("#close-wisp-modal")?.addEventListener(
+        "click",
+        hideWispModal
+    );
+
+    $("#save-custom-wisp")?.addEventListener(
+        "click",
+        saveCustomWisp
+    );
+
+    $("#skip-btn")?.addEventListener(
+        "click",
+        () => {
+            setLoading(false);
+            setLoadingBar(0);
+        }
+    );
+
+    const addressBar = $("#address-bar");
+
+    addressBar?.addEventListener(
+        "keydown",
+        event => {
+            if (event.key !== "Enter") return;
+
+            const target =
+                normalizeNavigationInput(
+                    addressBar.value
                 );
 
+            navigateTab(
+                activeTabId,
+                target
+            );
 
-            if (root) {
+            addressBar.blur();
+        }
+    );
 
-                root.innerHTML = `
-                    <div
-                        style="
-                            width:100%;
-                            height:100%;
-                            display:flex;
-                            align-items:center;
-                            justify-content:center;
-                            background:#101010;
-                            color:#fff;
-                            font-family:Inter,system-ui,sans-serif;
-                            padding:30px;
-                            text-align:center;
-                        "
-                    >
+    addressBar?.addEventListener(
+        "focus",
+        () => {
+            addressBar.select();
+        }
+    );
+}
 
-                        <div>
+function bindTabControls() {
+    $("#new-tab")?.addEventListener(
+        "click",
+        () => createTab(HOME_PAGE)
+    );
+}
 
-                            <h1
-                                style="
-                                    margin-bottom:10px;
-                                "
-                            >
-                                Veil failed to start
-                            </h1>
+function bindMessages() {
+    window.addEventListener(
+        "message",
+        event => {
+            if (!event.data) return;
 
-                            <p
-                                style="
-                                    color:#888;
-                                    max-width:600px;
-                                "
-                            >
-                                ${
-                                    escapeHtml(
-                                        error?.message ||
-                                        String(error)
-                                    )
-                                }
-                            </p>
-
-                        </div>
-
-                    </div>
-                `;
+            if (
+                event.data.type === "navigate" &&
+                typeof event.data.url === "string"
+            ) {
+                navigateTab(
+                    activeTabId,
+                    normalizeNavigationInput(
+                        event.data.url
+                    )
+                );
             }
         }
+    );
+}
+
+async function initializeBrowser() {
+    if (browserInitialized) return;
+
+    browserInitialized = true;
+
+    bindNavigation();
+    bindTabControls();
+    bindMessages();
+
+    createTab(HOME_PAGE);
+}
+
+async function initialize() {
+    try {
+        await initializeWithBestServer();
+        await registerServiceWorker();
+        await getSharedConnection();
+        await getSharedScramjet();
+        await initializeBrowser();
+
+        console.log(
+            "Veil initialized with Wisp:",
+            getCurrentWisp()
+        );
+    } catch (error) {
+        console.error(
+            "Veil initialization failed:",
+            error
+        );
+
+        setLoading(false);
+        setLoadingBar(0);
+
+        setError(
+            error?.message ||
+            "The Veil browser engine could not initialize."
+        );
     }
-);
+}
+
+initialize();

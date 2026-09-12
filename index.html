@@ -3,68 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+    <meta name="theme-color" content="#0a0a0a">
     <title>Veil</title>
 
-    <!-- Local Veil assets -->
-    <script src="./sj/scramjet.all.js" defer></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-    <script type="module">
-        import * as BareMux from "./bm/index.mjs";
-        window.BareMux = BareMux;
-    </script>
-
-    <script src="./sc.js" defer></script>
+    <!-- Scramjet is loaded before sc.js so $scramjetLoadController exists. -->
+    <script src="./sj/scramjet.all.js"></script>
+    <script type="module" src="./sc.js"></script>
 
     <style>
         :root {
-            --bg: #0b0c0f;
-            --surface: #111318;
-            --surface-2: #17191f;
-            --surface-3: #1d2027;
-
-            --border: #292d35;
-            --border-light: #343943;
-
-            --text: #f2f3f5;
-            --text-secondary: #a5a9b2;
-            --text-muted: #707580;
-
-            --accent: #e6e8ec;
-            --danger: #ef4444;
-
-            --radius: 12px;
+            --bg: #0a0a0a;
+            --surface: #0f0f0f;
+            --surface-hover: #1a1a1a;
+            --surface-active: #252525;
+            --border: #1f1f1f;
+            --border-light: #2a2a2a;
+            --text: #e4e4e7;
+            --text-muted: #71717a;
+            --text-dim: #52525b;
+            --accent: #ffffff;
+            --success: #22c55e;
+            --error: #ef4444;
         }
 
-        * {
+        *, *::before, *::after {
             box-sizing: border-box;
         }
 
-        html,
-        body {
-            width: 100%;
-            height: 100%;
+        html, body, #app {
+            width: 100vw;
+            height: 100vh;
             margin: 0;
             overflow: hidden;
             background: var(--bg);
             color: var(--text);
-            font-family:
-                Inter,
-                ui-sans-serif,
-                system-ui,
-                -apple-system,
-                BlinkMacSystemFont,
-                "Segoe UI",
-                sans-serif;
+            font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
 
         body {
-            display: flex;
-            flex-direction: column;
+            min-width: 0;
         }
 
-        button,
-        input {
+        button, input {
             font: inherit;
         }
 
@@ -73,128 +58,379 @@
             outline: none;
         }
 
-        /* --------------------------------
-           APP
-        -------------------------------- */
-
-        #app {
+        .browser-container {
             width: 100%;
             height: 100%;
             min-height: 0;
+            display: flex;
+            flex-direction: column;
             background: var(--bg);
         }
 
-        /* --------------------------------
-           WISP SETTINGS
-        -------------------------------- */
+        /* Top tab row */
+        .tabs {
+            display: flex;
+            align-items: flex-end;
+            gap: 4px;
+            min-height: 48px;
+            padding: 8px 8px 0;
+            background: var(--bg);
+            overflow-x: auto;
+            overflow-y: hidden;
+            scrollbar-width: none;
+        }
 
+        .tabs::-webkit-scrollbar {
+            height: 0;
+        }
+
+        .tab {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 220px;
+            min-width: 180px;
+            max-width: 220px;
+            height: 40px;
+            padding: 8px 12px;
+            flex: 0 1 220px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-bottom: 0;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            transition: background .15s ease, border-color .15s ease;
+        }
+
+        .tab:hover {
+            background: var(--surface-hover);
+        }
+
+        .tab.active {
+            background: var(--surface-hover);
+            border-color: var(--border-light);
+        }
+
+        .tab-favicon {
+            width: 16px;
+            height: 16px;
+            flex: 0 0 16px;
+            object-fit: contain;
+            border-radius: 2px;
+        }
+
+        .tab-title {
+            min-width: 0;
+            flex: 1;
+            color: var(--text);
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .tab-close {
+            flex: 0 0 auto;
+            padding: 2px 4px;
+            color: var(--text-muted);
+            border-radius: 4px;
+            font-size: 16px;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .tab-close:hover {
+            color: var(--text);
+            background: rgba(255, 255, 255, .1);
+        }
+
+        .new-tab {
+            width: 32px;
+            height: 32px;
+            margin: 0 0 4px;
+            flex: 0 0 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            background: transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .new-tab:hover {
+            color: var(--text);
+            background: var(--surface);
+        }
+
+        /* Navigation row */
+        .nav {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 0;
+            padding: 8px;
+            background: var(--bg);
+        }
+
+        .nav button {
+            width: 36px;
+            height: 36px;
+            flex: 0 0 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            background: var(--surface);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background .15s ease, color .15s ease;
+        }
+
+        .nav button:hover {
+            color: var(--text);
+            background: var(--surface-hover);
+        }
+
+        .address-wrapper {
+            position: relative;
+            min-width: 0;
+            flex: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        input.bar {
+            width: 100%;
+            height: 36px;
+            padding: 0 40px 0 14px;
+            color: var(--text);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            outline: none;
+            font-size: 13px;
+            transition: background .15s ease, border-color .15s ease;
+        }
+
+        input.bar:focus {
+            background: var(--surface-hover);
+            border-color: var(--border-light);
+        }
+
+        input.bar::placeholder {
+            color: var(--text-muted);
+        }
+
+        #home-btn-nav {
+            position: absolute;
+            right: 4px;
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            color: var(--text-muted);
+            background: transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        #home-btn-nav:hover {
+            color: var(--text);
+            background: var(--surface-hover);
+        }
+
+        /* Loading bar */
+        .loading-bar-container {
+            height: 2px;
+            flex: 0 0 2px;
+            background: transparent;
+        }
+
+        .loading-bar {
+            width: 0;
+            height: 100%;
+            background: var(--text);
+            opacity: 0;
+            transition: width .2s ease, opacity .15s ease;
+        }
+
+        /* Browser viewport */
+        .iframe-container {
+            position: relative;
+            min-height: 0;
+            flex: 1;
+            background: var(--bg);
+        }
+
+        .iframe-container iframe {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+            background: var(--bg);
+        }
+
+        .iframe-container iframe.hidden {
+            display: none;
+        }
+
+        .iframe-container iframe.loading {
+            filter: blur(15px);
+            transition: filter .5s ease;
+        }
+
+        .message-container {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            color: var(--text);
+            text-align: center;
+            background: rgba(10, 10, 10, .4);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .message-content {
+            max-width: 400px;
+            padding: 20px;
+        }
+
+        .message-content h1 {
+            margin: 0 0 8px;
+            color: var(--text);
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .message-content p {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 13px;
+            word-break: break-all;
+        }
+
+        .spinner,
+        .tab-spinner {
+            border: 2px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin .8s linear infinite;
+        }
+
+        .spinner {
+            width: 32px;
+            height: 32px;
+            margin: 0 auto 20px;
+        }
+
+        .tab-spinner {
+            width: 14px;
+            height: 14px;
+            flex: 0 0 14px;
+        }
+
+        #skip-btn {
+            display: none;
+            margin-top: 20px;
+            padding: 8px 16px;
+            color: var(--text-muted);
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        #skip-btn:hover {
+            color: var(--text);
+            border-color: var(--border-light);
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Wisp settings */
         .wisp-settings-modal {
             position: fixed;
             inset: 0;
             z-index: 9999;
-
             display: flex;
             align-items: center;
             justify-content: center;
-
             padding: 20px;
-
-            background: rgba(5, 6, 8, 0.72);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-
-            opacity: 1;
-            visibility: visible;
-            transition:
-                opacity 0.18s ease,
-                visibility 0.18s ease;
+            background: rgba(0, 0, 0, .8);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
         }
 
         .wisp-settings-modal.hidden {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
+            display: none;
         }
 
         .settings-card {
-            width: min(500px, 100%);
-            max-height: min(700px, calc(100vh - 40px));
-
+            width: 400px;
+            max-width: 90vw;
+            max-height: calc(100vh - 40px);
             display: flex;
             flex-direction: column;
-
+            overflow: hidden;
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 16px;
-
-            overflow: hidden;
-
-            box-shadow:
-                0 20px 60px rgba(0, 0, 0, 0.45);
+            border-radius: 12px;
+            box-shadow: 0 16px 48px rgba(0, 0, 0, .55);
         }
 
-        /* --------------------------------
-           HEADER
-        -------------------------------- */
-
         .settings-header {
-            height: 64px;
-
             display: flex;
             align-items: center;
             justify-content: space-between;
-
-            padding: 0 20px;
-
+            padding: 16px 20px;
             border-bottom: 1px solid var(--border);
-            background: var(--surface);
         }
 
         .settings-header h2 {
-            margin: 0;
-
             display: flex;
             align-items: center;
             gap: 10px;
-
-            font-size: 16px;
+            margin: 0;
+            color: var(--text);
+            font-size: 15px;
             font-weight: 600;
-            letter-spacing: -0.01em;
         }
 
         .settings-header h2 i {
-            color: var(--text-secondary);
-            font-size: 15px;
+            color: var(--text-muted);
         }
 
         .close-btn {
-            width: 34px;
-            height: 34px;
-
+            width: 30px;
+            height: 30px;
             display: flex;
             align-items: center;
             justify-content: center;
-
-            border-radius: 8px;
-
-            color: var(--text-secondary);
+            padding: 4px;
+            color: var(--text-muted);
             background: transparent;
-
+            border-radius: 6px;
             cursor: pointer;
-
-            transition:
-                background 0.15s ease,
-                color 0.15s ease;
+            font-size: 17px;
         }
 
         .close-btn:hover {
-            background: var(--surface-3);
             color: var(--text);
+            background: var(--surface-hover);
         }
-
-        /* --------------------------------
-           CONTENT
-        -------------------------------- */
 
         .settings-content {
             padding: 20px;
@@ -202,216 +438,151 @@
         }
 
         .section-title {
-            margin: 0 0 10px;
-
             display: flex;
             align-items: center;
             gap: 8px;
-
-            color: var(--text-secondary);
-
-            font-size: 12px;
+            margin: 0 0 12px;
+            color: var(--text-muted);
+            font-size: 11px;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.07em;
+            letter-spacing: .05em;
         }
 
         .section-title:not(:first-child) {
-            margin-top: 24px;
+            margin-top: 22px;
         }
 
         .section-title i {
             font-size: 11px;
-            color: var(--text-muted);
         }
-
-        /* --------------------------------
-           SERVER LIST
-        -------------------------------- */
 
         .server-list {
             display: flex;
             flex-direction: column;
-            gap: 7px;
+            gap: 6px;
         }
 
-        .server-item {
-            width: 100%;
-
+        .wisp-option {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-
-            min-height: 52px;
-            padding: 10px 13px;
-
+            flex-direction: column;
+            gap: 4px;
+            padding: 12px;
+            background: var(--bg);
             border: 1px solid var(--border);
-            border-radius: 10px;
-
-            background: var(--surface-2);
-            color: var(--text);
-
+            border-radius: 8px;
             cursor: pointer;
-
-            transition:
-                background 0.15s ease,
-                border-color 0.15s ease;
+            transition: background .15s ease, border-color .15s ease;
         }
 
-        .server-item:hover {
-            background: var(--surface-3);
+        .wisp-option:hover {
+            background: var(--surface-hover);
             border-color: var(--border-light);
         }
 
-        .server-item.active {
-            background: #1a1d23;
-            border-color: #555b66;
+        .wisp-option.active {
+            background: #151515;
+            border-color: var(--accent);
         }
 
-        .server-info {
-            min-width: 0;
-
+        .wisp-option-header {
             display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 3px;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
         }
 
-        .server-name {
-            font-size: 13px;
-            font-weight: 600;
+        .wisp-option-name {
+            display: flex;
+            align-items: center;
+            gap: 8px;
             color: var(--text);
+            font-size: 13px;
+            font-weight: 500;
         }
 
-        .server-url {
-            max-width: 330px;
-
+        .wisp-option-url {
             overflow: hidden;
+            color: var(--text-muted);
+            font-family: Consolas, monospace;
+            font-size: 11px;
             text-overflow: ellipsis;
             white-space: nowrap;
-
-            color: var(--text-muted);
-            font-size: 11px;
         }
 
         .server-status {
-            flex-shrink: 0;
-
             display: flex;
             align-items: center;
             gap: 6px;
-
-            margin-left: 12px;
-
+            flex-shrink: 0;
             color: var(--text-muted);
+            font-family: Consolas, monospace;
             font-size: 11px;
         }
 
-        .status-dot {
+        .status-indicator {
             width: 7px;
             height: 7px;
-
             border-radius: 50%;
-            background: #555b65;
+            background: var(--text-muted);
         }
 
-        .status-dot.online {
-            background: #8b929d;
+        .status-indicator.status-success {
+            background: var(--success);
         }
 
-        .status-dot.error {
-            background: var(--danger);
+        .status-indicator.status-error {
+            background: var(--error);
         }
-
-        /* --------------------------------
-           CUSTOM SERVER
-        -------------------------------- */
 
         .custom-input-group {
             display: flex;
             gap: 8px;
         }
 
-        #custom-wisp-input {
+        .custom-input-group input {
             min-width: 0;
             flex: 1;
-
-            height: 42px;
-
+            height: 36px;
             padding: 0 12px;
-
-            border: 1px solid var(--border);
-            border-radius: 9px;
-
-            outline: none;
-
-            background: var(--surface-2);
             color: var(--text);
-
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            outline: none;
+            font-family: Consolas, monospace;
             font-size: 12px;
-
-            transition:
-                border-color 0.15s ease,
-                background 0.15s ease;
         }
 
-        #custom-wisp-input::placeholder {
+        .custom-input-group input:focus {
+            border-color: var(--border-light);
+        }
+
+        .custom-input-group input::placeholder {
             color: var(--text-muted);
         }
 
-        #custom-wisp-input:focus {
-            background: var(--surface-3);
-            border-color: var(--border-light);
-        }
-
-        #save-custom-wisp {
-            width: 42px;
-            height: 42px;
-
-            flex-shrink: 0;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            border: 1px solid var(--border);
-            border-radius: 9px;
-
-            background: var(--surface-3);
-            color: var(--text);
-
+        .custom-input-group button {
+            width: 36px;
+            height: 36px;
+            flex: 0 0 36px;
+            color: #0a0a0a;
+            background: var(--accent);
+            border-radius: 6px;
             cursor: pointer;
-
-            transition:
-                background 0.15s ease,
-                border-color 0.15s ease;
         }
 
-        #save-custom-wisp:hover {
-            background: #242830;
-            border-color: var(--border-light);
+        .custom-input-group button:hover {
+            opacity: .9;
         }
-
-        /* --------------------------------
-           FOOTER
-        -------------------------------- */
 
         .settings-footer {
-            padding: 13px 20px;
-
-            border-top: 1px solid var(--border);
-
+            padding: 12px 20px;
             color: var(--text-muted);
-
-            background: #0f1014;
-
-            font-size: 11px;
+            border-top: 1px solid var(--border);
+            font-size: 12px;
             text-align: center;
         }
-
-        /* --------------------------------
-           SCROLLBAR
-        -------------------------------- */
 
         ::-webkit-scrollbar {
             width: 7px;
@@ -423,81 +594,57 @@
         }
 
         ::-webkit-scrollbar-thumb {
-            background: #292d35;
+            background: #292929;
             border-radius: 999px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-            background: #383d47;
+            background: #383838;
         }
 
-        /* --------------------------------
-           MOBILE
-        -------------------------------- */
-
         @media (max-width: 600px) {
+            .tab {
+                min-width: 150px;
+                max-width: 190px;
+            }
+
             .settings-card {
                 max-height: calc(100vh - 24px);
-                border-radius: 13px;
             }
 
-            .settings-header {
-                height: 58px;
-                padding: 0 16px;
-            }
-
-            .settings-content {
-                padding: 16px;
-            }
-
+            .settings-header,
+            .settings-content,
             .settings-footer {
-                padding: 12px 16px;
-            }
-
-            .server-url {
-                max-width: 210px;
+                padding-left: 16px;
+                padding-right: 16px;
             }
         }
     </style>
 </head>
 
 <body>
-
     <div id="app"></div>
 
-    <!-- Veil Wisp Server Settings -->
-    <div
-        class="wisp-settings-modal hidden"
-        id="wisp-settings-modal"
-    >
+    <div class="wisp-settings-modal hidden" id="wisp-settings-modal">
         <div class="settings-card">
-
             <div class="settings-header">
                 <h2>
                     <i class="fa-solid fa-server"></i>
                     Proxy Server
                 </h2>
 
-                <button
-                    class="close-btn"
-                    id="close-wisp-modal"
-                    aria-label="Close"
-                >
+                <button class="close-btn" id="close-wisp-modal" aria-label="Close">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
 
             <div class="settings-content">
-
                 <div class="section-title">
                     <i class="fa-solid fa-network-wired"></i>
                     Servers
                 </div>
 
-                <div
-                    class="server-list"
-                    id="server-list"
-                ></div>
+                <div class="server-list" id="server-list"></div>
 
                 <div class="section-title">
                     <i class="fa-solid fa-plus"></i>
@@ -506,29 +653,23 @@
 
                 <div class="custom-input-group">
                     <input
-                        type="text"
                         id="custom-wisp-input"
+                        type="text"
                         placeholder="wss://your-server.com/wisp/"
                         autocomplete="off"
                         spellcheck="false"
                     >
 
-                    <button
-                        id="save-custom-wisp"
-                        aria-label="Add custom server"
-                    >
+                    <button id="save-custom-wisp" aria-label="Add custom server">
                         <i class="fa-solid fa-plus"></i>
                     </button>
                 </div>
-
             </div>
 
             <div class="settings-footer">
                 Choose the server with the best connection for you.
             </div>
-
         </div>
     </div>
-
 </body>
 </html>

@@ -700,7 +700,7 @@ async function registerServiceWorker(
     const registration =
         await navigator.serviceWorker.register(
             new URL(
-                "SW.js",
+                "sw.js",
                 ROOT
             ).href,
             {
