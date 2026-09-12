@@ -242,13 +242,30 @@ async function getSharedScramjet() {
         return sharedScramjet;
     }
 
-    if (typeof ScramjetController === "undefined") {
+    let ScramjetControllerClass = window.ScramjetController;
+
+    if (!ScramjetControllerClass && typeof window.$scramjetLoadController === "function") {
+        const mod = await window.$scramjetLoadController();
+
+        // Scramjet v1 loader returns an ES module namespace:
+        //   Module { ScramjetController, ScramjetFrame }
+        if (typeof mod === "function") {
+            ScramjetControllerClass = mod;
+        } else if (mod && typeof mod === "object") {
+            ScramjetControllerClass =
+                mod.ScramjetController ||
+                mod.default ||
+                null;
+        }
+    }
+
+    if (typeof ScramjetControllerClass !== "function") {
         throw new Error("ScramjetController is unavailable.");
     }
 
     const basePath = getBasePath();
 
-    sharedScramjet = new ScramjetController({
+    sharedScramjet = new ScramjetControllerClass({
         prefix: basePath + "service/",
         files: {
             wasm: basePath + VEIL_ASSETS.scramjetWasm,
