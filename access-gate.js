@@ -599,7 +599,13 @@
       return;
     }
 
-    if (data.reason === "unverified" || (user && user.emailVerified === false)) {
+    /* Must verify email before pending (or any waiting screen) */
+    var needsVerify =
+      data.reason === "unverified" ||
+      data.needsVerify ||
+      (user && user.emailVerified === false) ||
+      (user && user.status === "unverified");
+    if (needsVerify) {
       if (user && user.email) {
         try { localStorage.setItem(PENDING_EMAIL, user.email); } catch (e) {}
       }
@@ -609,7 +615,7 @@
       return;
     }
 
-    // No time / pending / session ended → waiting screen (not login)
+    // Verified only: pending / expired / session ended → waiting screen
     if (
       data.reason === "pending" ||
       data.reason === "expired" ||
@@ -717,8 +723,18 @@
       var code = (document.getElementById("verifyCode") || {}).value || "";
       setMsg("Verifying…", false);
       api("/api/auth/verify", { email: email, code: code }).then(function (r) {
-        if (!r.data.ok) {
+        if (!r.data.ok && !r.data.reason) {
           setMsg(r.data.error || "Invalid code", true, true);
+          return;
+        }
+        /* After verify: enter Veil, or pending — never stay unverified */
+        if (r.data.token) setToken(r.data.token, r.data.user);
+        if (r.data.ok && r.data.user && r.data.user.hasAccess) {
+          handleAuthResult(r.data, r.data.token);
+          return;
+        }
+        if (r.data.user || r.data.reason) {
+          handleAuthResult(r.data, r.data.token);
           return;
         }
         setMsg("Email verified. Log in to continue.", false);

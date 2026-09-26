@@ -740,22 +740,20 @@ body.boot-reveal #browser{
     </section>
     <section class="setting-section">
       <div class="setting-title">Home page background</div>
-      <div class="input-row"><input class="text-input" id="backgroundUrl" placeholder="Image, GIF, WebP, or video URL"></div>
+      <div class="input-row"><input class="text-input" id="backgroundUrl" placeholder="URL"></div>
       <button class="primary-btn" id="applyBackground" type="button">Apply background</button>
-      <p class="hint">Supports images, GIF, WebP, and video (mp4 / webm).</p>
+      <p class="hint">Supports images, GIF, WebP, and video.</p>
     </section>
     <section class="setting-section">
-      <div class="setting-title">24-hour time</div>
       <div class="switch-row">
         <span class="switch-label">Use 24-hour clock</span>
         <button type="button" class="switch" id="time24Switch" role="switch" aria-checked="false"></button>
       </div>
-      <p class="hint">Off = 12-hour with AM/PM.</p>
     </section>
     <section class="setting-section">
       <div class="setting-title">Home page animations</div>
       <div class="switch-row">
-        <span class="switch-label">Enable animations</span>
+        <span class="switch-label">Enable/Disable animations</span>
         <button type="button" class="switch" id="animEnabledSwitch" role="switch" aria-checked="false"></button>
       </div>
       <div class="anim-opts" id="animOpts">
@@ -789,7 +787,6 @@ body.boot-reveal #browser{
       <div class="input-row" style="margin-top:10px"><input class="text-input" id="cloakTitle" placeholder="Custom title"></div>
       <div class="input-row"><input class="text-input" id="cloakIcon" placeholder="Favicon URL"></div>
       <button class="primary-btn" id="applyCloak" type="button">Apply cloak</button>
-      <p class="hint">Also applies to about:blank windows and tabs.</p>
     </section>
     <section class="setting-section">
       <div class="setting-title">Panic key</div>
@@ -797,7 +794,6 @@ body.boot-reveal #browser{
       <div class="input-row"><label class="input-label">Redirect</label><input class="text-input" id="panicUrl" placeholder="https://classroom.google.com"></div>
       <button class="primary-btn" id="bindPanic" type="button">Bind key</button>
       <button class="secondary-btn" id="unbindPanic" type="button">Unbind</button>
-      <p class="hint">Ignored while typing in a text box.</p>
     </section>
     <section class="setting-section">
       <div class="setting-title">About:blank launch</div>
@@ -805,7 +801,6 @@ body.boot-reveal #browser{
         <option value="manual">Manual - only when I choose Launch</option>
         <option value="auto">Auto - open about:blank once on start</option>
       </select>
-      <p class="hint">Skips if already inside about:blank.</p>
       <button class="primary-btn" id="launchNowBtn" type="button" style="margin-top:8px">Launch options</button>
     </section>
     <section class="setting-section">
@@ -814,7 +809,7 @@ body.boot-reveal #browser{
         <span class="switch-label">Unload pages when locking</span>
         <button type="button" class="switch" id="lockUnloadSwitch" role="switch" aria-checked="false"></button>
       </div>
-      <p class="hint">Off keeps pages running under the lock.</p>
+      <p class="hint">Any unsaved changes may be lost.</p>
     </section>
 
     <div class="settings-cat">Browser</div>
@@ -826,12 +821,11 @@ body.boot-reveal #browser{
         <option value="bing">Bing</option>
         <option value="brave">Brave</option>
       </select>
-      <p class="hint">Used when you type words instead of a full address.</p>
     </section>
     <section class="setting-section">
       <div class="setting-title">Ad blocker</div>
       <div class="switch-row">
-        <span class="switch-label">Block ads and trackers</span>
+        <span class="switch-label">Block ads</span>
         <button type="button" class="switch" id="adblockSwitch" role="switch" aria-checked="true"></button>
       </div>
     </section>
@@ -845,7 +839,7 @@ body.boot-reveal #browser{
     <section class="setting-section">
       <div class="setting-title">Proxy servers</div>
       <div class="server-list" id="serverList"></div>
-      <p class="hint">Pings update live. Green = fast, orange = ok, red = slow or offline.</p>
+      <p class="hint">Green = fast, orange = ok, red = slow or offline.</p>
       <div class="input-row" style="margin-top:10px"><input class="text-input" id="customServerName" placeholder="Custom name"></div>
       <div class="input-row"><input class="text-input" id="customServerUrl" placeholder="wss://your-server"></div>
       <button class="primary-btn" id="addCustomServer" type="button">Add custom server</button>
@@ -856,14 +850,13 @@ body.boot-reveal #browser{
         <button class="transport-btn" id="transportEpoxy" type="button">Epoxy</button>
         <button class="transport-btn" id="transportLibcurl" type="button">Libcurl</button>
       </div>
-      <p class="hint">Try Epoxy first. Switch to Libcurl if a site will not load.</p>
       <div class="status" id="engineStatus">Starting...</div>
     </section>
 
     <div class="settings-cat">Misc</div>
     <section class="setting-section">
       <div class="setting-title">Change username</div>
-      <div class="input-row"><input class="text-input" id="newUsername" placeholder="New display name"></div>
+      <div class="input-row"><input class="text-input" id="newUsername" placeholder="New name"></div>
       <button class="primary-btn" id="saveUsername" type="button">Save username</button>
     </section>
     <section class="setting-section">
@@ -877,17 +870,17 @@ body.boot-reveal #browser{
     <section class="setting-section">
       <div class="setting-title">Account</div>
       <button class="secondary-btn" id="signOutBtn" type="button">Sign out</button>
-      <p class="hint">Signs you out of Veil and Google on this device.</p>
+      <p class="hint">Signs you out of Veil.</p>
     </section>
     <section class="setting-section">
       <div class="setting-title">Factory reset</div>
       <button class="secondary-btn" id="resetSettings" type="button">Factory reset</button>
-      <p class="hint">Clears theme and browser settings. Profile password is kept unless you clear site data.</p>
+      <p class="hint">Resets all configurations. Username and Password are ignored.</p>
     </section>
     <section class="setting-section">
       <div class="setting-title">Admin</div>
       <button class="secondary-btn" id="openAdminPanel" type="button">Open admin panel</button>
-      <p class="hint">Opens the admin panel in a Veil tab. Requires worker password.</p>
+      <p class="hint">Opens the admin panel.</p>
     </section>
   </div>
 </aside>

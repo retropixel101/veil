@@ -98,7 +98,37 @@ $("userSearch").addEventListener("input", function () {
 });
 
 function badge(status) {
-  return '<span class="badge ' + (status || "pending") + '">' + (status || "pending") + "</span>";
+  var s = status || "pending";
+  var label = s;
+  if (s === "allowed") label = "allowed";
+  else if (s === "pending") label = "pending";
+  else if (s === "expired") label = "expired";
+  else if (s === "banned") label = "banned";
+  else if (s === "unverified") label = "unverified";
+  return '<span class="badge ' + s + '">' + label + "</span>";
+}
+
+function accessLine(u) {
+  if (u.banned || u.status === "banned") {
+    var bl = u.banRemainingHuman || "unlimited";
+    return "Banned · " + bl + (u.banReason ? " · " + u.banReason : "");
+  }
+  if (u.status === "unverified" || u.emailVerified === false) {
+    return "Unverified · no access until email is confirmed";
+  }
+  if (u.infinite || u.remainingLabel === "inf") {
+    return "Access: unlimited";
+  }
+  if (u.status === "allowed" && (u.remainingHuman || u.remainingLabel)) {
+    return "Access left: " + (u.remainingHuman || u.remainingLabel);
+  }
+  if (u.status === "expired") {
+    return "Access: expired";
+  }
+  if (u.status === "pending") {
+    return "Access: none (waiting for time)";
+  }
+  return "Access: " + (u.remainingHuman || u.remainingLabel || "none");
 }
 
 function fmtDate(ts) {
@@ -134,28 +164,30 @@ function loadUsers() {
       return;
     }
     users.forEach(function (u) {
-      var time =
-        u.infinite || u.remainingLabel === "inf"
-          ? "unlimited"
-          : u.remainingHuman || u.remainingLabel || "none";
+      var status = u.status || "pending";
+      // Prefer server status; don't double-badge unverified
+      var extraBadges = "";
+      if (u.googleLinked) extraBadges += '<span class="badge google">google</span>';
       var div = document.createElement("div");
       div.className = "user";
       div.innerHTML =
         '<div class="user-email">' +
         escapeHtml(u.email) +
-        badge(u.status) +
-        (u.googleLinked ? '<span class="badge">google</span>' : "") +
-        (!u.emailVerified ? '<span class="badge">unverified</span>' : "") +
+        badge(status) +
+        extraBadges +
         "</div>" +
         '<div class="user-meta">' +
-        "Access: " +
-        escapeHtml(time) +
-        (u.banned ? " · banned " + escapeHtml(u.banRemainingHuman || "") : "") +
-        " · login " +
+        escapeHtml(accessLine(u)) +
+        " · last login " +
         escapeHtml(fmtDate(u.lastLogin)) +
         "</div>" +
         '<div class="detail">' +
         '<div class="user-meta" style="margin-bottom:10px">' +
+        (u.expires && !u.infinite
+          ? "Expires: " + escapeHtml(fmtDate(u.expires)) + "<br>"
+          : u.infinite
+            ? "Expires: never<br>"
+            : "") +
         (u.banReason ? "Ban reason: " + escapeHtml(u.banReason) + "<br>" : "") +
         "Joined " +
         escapeHtml(fmtDate(u.created)) +
