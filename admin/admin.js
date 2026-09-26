@@ -214,6 +214,7 @@ function loadUsers() {
         '<button type="button" class="kick">End access</button>' +
         (u.status === "banned" ? '<button type="button" class="unban">Remove ban</button>' : "") +
         (!u.emailVerified ? '<button type="button" class="verify">Mark verified</button>' : "") +
+        '<button type="button" class="danger delacc">Delete account</button>' +
         "</div>" +
         '<div class="msg actmsg"></div>' +
         "</div>";
@@ -268,13 +269,24 @@ function loadUsers() {
           postUser("/api/admin/users/unban", u.email, {}, msg, "Ban removed");
         };
       }
-      var verify = div.querySelector(".verify");
+            var verify = div.querySelector(".verify");
       if (verify) {
         verify.onclick = function (e) {
           e.stopPropagation();
           postUser("/api/admin/users/verify", u.email, {}, msg, "Marked verified");
         };
       }
+
+      var delacc = div.querySelector(".delacc");
+      if (delacc) {
+        delacc.onclick = function (e) {
+          e.stopPropagation();
+          if (!confirm("Delete account " + u.email + "?\n\nThis removes the account completely. They must sign up and verify again.")) return;
+          if (!confirm("Really delete " + u.email + "? This cannot be undone.")) return;
+          postUser("/api/admin/users/delete", u.email, {}, msg, "Account deleted");
+        };
+      }
+
 
       list.appendChild(div);
     });

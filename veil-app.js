@@ -48,12 +48,39 @@ function allWispServers() {
 }
 
 const CLOAK_PRESETS = {
-  docs: { title: "Google Docs", icon: "https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico" },
-  classroom: { title: "Google Classroom", icon: "https://ssl.gstatic.com/classroom/favicon.png" },
-  drive: { title: "My Drive - Google Drive", icon: "https://ssl.gstatic.com/docs/doclist/images/drive_2022q3_32dp.png" },
-  canvas: { title: "Dashboard", icon: "https://du11hjcvx0uqb.cloudfront.net/dist/images/favicon-e10d657a73.ico" },
+  drive: { title: "Home - Google Drive", icon: IMG + "favi/drive.png" },
+  gmail: { title: null, icon: IMG + "favi/gmail.png", dynamic: "gmail" },
+  docs: { title: "Google Docs", icon: IMG + "favi/docs.png" },
+  "campus-student": { title: "Campus Student", icon: IMG + "favi/campus-student.png" },
+  "campus-grades": { title: "Grades | Infinite Campus", icon: IMG + "favi/campus-student.png" },
+  "campus-profile": { title: "Student Profile | Home | Infinite Campus", icon: IMG + "favi/campus-student.png" },
+  "campus-assignments": { title: "Assignments | Infinite Campus", icon: IMG + "favi/campus-student.png" },
   veil: { title: "Veil", icon: FAVI }
 };
+
+function resolveCloakPreset(id) {
+  const p = CLOAK_PRESETS[id];
+  if (!p) return null;
+  if (p.dynamic === "gmail") {
+    let email = "";
+    try {
+      const meta = JSON.parse(localStorage.getItem("veil_access_meta") || "null");
+      if (meta && meta.email) email = meta.email;
+    } catch (e) {}
+    if (!email && window.VeilAccess && typeof window.VeilAccess.getMeta === "function") {
+      try {
+        const m = window.VeilAccess.getMeta();
+        if (m && m.email) email = m.email;
+      } catch (e) {}
+    }
+    const n = 200 + Math.floor(Math.random() * 1801);
+    return {
+      title: "Inbox (" + n + ")" + (email ? " - " + email : ""),
+      icon: p.icon
+    };
+  }
+  return { title: p.title, icon: p.icon };
+}
 
 let engineReady = false;
 let engineController = null;
@@ -1417,14 +1444,13 @@ function setupHomeFx(wrapper) {
   stopHomeFx(wrapper);
   const canvas = wrapper.querySelector("[data-home-fx]");
   if (!canvas) return;
-  // Animations off by default; only run when enabled AND cookies allowed
   if (!settings.animEnabled || !COOKIE.consent) {
     canvas.style.display = "none";
     return;
   }
   canvas.style.display = "block";
   const ctx = canvas.getContext("2d");
-  const state = { raf: 0, t: 0, particles: [] };
+  const state = { raf: 0, t: 0, particles: [], bolts: [], flash: 0 };
   const resize = () => {
     const r = wrapper.getBoundingClientRect();
     canvas.width = Math.max(1, Math.floor(r.width * (window.devicePixelRatio || 1)));
@@ -1433,112 +1459,189 @@ function setupHomeFx(wrapper) {
     canvas.style.height = r.height + "px";
   };
   resize();
-  const style = settings.animStyle || "orbs";
+  let style = settings.animStyle || "orbs";
+  if (style === "waves" || style === "pulse") style = "rain";
   const sizeMul = Math.max(0.4, Math.min(2.5, Number(settings.animSize) || 1));
   let n = Number(settings.animCount);
   if (!Number.isFinite(n)) n = 18;
   n = Math.max(4, Math.min(80, Math.round(n)));
-  if (style === "pulse") n = Math.min(n, 12);
   if (style === "stars") n = Math.max(n, 12);
-  if (style === "waves") n = Math.min(n, 8);
+  if (style === "rain") n = Math.max(20, Math.min(120, Math.round(n * 1.4)));
   state.shooters = [];
-  for (let i = 0; i < n; i++) {
-    const isStars = style === "stars";
-    state.particles.push({
-      x: Math.random(), y: Math.random(),
-      r: isStars ? (0.4 + Math.random() * 1.6) : ((0.015 + Math.random() * 0.07) * sizeMul),
-      vx: isStars ? 0 : (Math.random() - 0.5) * 0.0004,
-      vy: isStars ? 0 : (Math.random() - 0.5) * 0.00035,
-      phase: Math.random() * Math.PI * 2,
-      tw: Math.random() * Math.PI * 2
-    });
+  state.clouds = [];
+
+  if (style === "rain") {
+    for (let i = 0; i < n; i++) {
+      state.particles.push({
+        x: Math.random(),
+        y: Math.random(),
+        len: (0.012 + Math.random() * 0.028) * sizeMul,
+        spd: 0.004 + Math.random() * 0.008,
+        thick: 0.6 + Math.random() * 1.2,
+        drift: (Math.random() - 0.5) * 0.0015
+      });
+    }
+    const cloudN = Math.max(3, Math.min(10, Math.round(n / 10) + 2));
+    for (let i = 0; i < cloudN; i++) {
+      state.clouds.push({
+        x: Math.random(),
+        y: 0.04 + Math.random() * 0.22,
+        w: 0.14 + Math.random() * 0.22,
+        h: 0.04 + Math.random() * 0.05,
+        spd: 0.00015 + Math.random() * 0.00025,
+        alpha: 0.12 + Math.random() * 0.18
+      });
+    }
+  } else {
+    for (let i = 0; i < n; i++) {
+      const isStars = style === "stars";
+      state.particles.push({
+        x: Math.random(), y: Math.random(),
+        r: isStars ? (0.4 + Math.random() * 1.6) : ((0.015 + Math.random() * 0.07) * sizeMul),
+        vx: isStars ? 0 : (Math.random() - 0.5) * 0.0004,
+        vy: isStars ? 0 : (Math.random() - 0.5) * 0.00035,
+        phase: Math.random() * Math.PI * 2,
+        tw: Math.random() * Math.PI * 2
+      });
+    }
   }
+
+  const spawnBolt = (w, h) => {
+    const segs = [];
+    let x = (0.15 + Math.random() * 0.7) * w;
+    let y = 0;
+    const targetY = h * (0.35 + Math.random() * 0.4);
+    while (y < targetY) {
+      const nx = x + (Math.random() - 0.5) * 28 * sizeMul;
+      const ny = y + 12 + Math.random() * 22;
+      segs.push({ x, y, nx, ny });
+      x = nx;
+      y = ny;
+    }
+    state.bolts.push({ segs, life: 1, branch: Math.random() > 0.55 });
+    state.flash = 0.55 + Math.random() * 0.35;
+  };
+
   const draw = () => {
     if (!settings.animEnabled) return;
-    const speed = Number(settings.animSpeed) || 1;
+    // Base speed scale so 1x is calm (was too fast before)
+    const speed = (Number(settings.animSpeed) || 1) * 0.42;
     state.t += 0.016 * speed;
     const w = canvas.width, h = canvas.height;
+    const dpr = window.devicePixelRatio || 1;
     ctx.clearRect(0, 0, w, h);
     const a = hexToRgb(settings.animColorA);
     const b = hexToRgb(settings.animColorB);
-    if (style === "waves") {
-      const waveN = Math.max(3, Math.min(12, Math.round(n / 4) + 2));
-      for (let i = 0; i < waveN; i++) {
-        const y = (0.2 + i * (0.55 / waveN)) * h;
-        const amp = (10 + i * 5 + sizeMul * 8) * sizeMul;
+
+    if (style === "rain") {
+      // Soft sky wash
+      const sky = ctx.createLinearGradient(0, 0, 0, h * 0.5);
+      sky.addColorStop(0, "rgba(" + a.r + "," + a.g + "," + a.b + ",0.08)");
+      sky.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, w, h * 0.55);
+
+      // Clouds
+      state.clouds.forEach((c) => {
+        c.x += c.spd * speed;
+        if (c.x > 1.2) c.x = -0.25;
+        const cx = c.x * w;
+        const cy = c.y * h;
+        const cw = c.w * w;
+        const ch = c.h * h;
+        ctx.fillStyle = "rgba(" + b.r + "," + b.g + "," + b.b + "," + c.alpha + ")";
         ctx.beginPath();
-        for (let x = 0; x <= w; x += 8) {
-          const yy = y + Math.sin(state.t * (0.8 + i * 0.15) + x * 0.008 + i) * amp;
-          if (x === 0) ctx.moveTo(x, yy); else ctx.lineTo(x, yy);
-        }
-        ctx.strokeStyle = "rgba(" + (i % 2 ? a.r : b.r) + "," + (i % 2 ? a.g : b.g) + "," + (i % 2 ? a.b : b.b) + "," + (0.2 - i * 0.02) + ")";
-        ctx.lineWidth = (2 + sizeMul) * (window.devicePixelRatio || 1);
-        ctx.stroke();
-      }
-    } else if (style === "pulse") {
-      const cx = w * 0.5, cy = h * 0.45;
-      const maxR = Math.min(w, h) * 0.42 * sizeMul;
-      const rings = Math.max(3, Math.min(n, 14));
-      for (let i = 0; i < rings; i++) {
-        const p = (state.t * 0.28 * speed + i / rings) % 1;
-        const rad = Math.max(4, p * maxR);
-        const alpha = Math.pow(1 - p, 1.4) * 0.55;
-        const col = i % 2 ? a : b;
-        ctx.beginPath();
-        ctx.arc(cx, cy, rad, 0, Math.PI * 2);
-        ctx.strokeStyle = "rgba(" + col.r + "," + col.g + "," + col.b + "," + alpha + ")";
-        ctx.lineWidth = Math.max(1.2, (2.2 + sizeMul * 1.2) * (1 - p * 0.5) * (window.devicePixelRatio || 1));
-        ctx.stroke();
-      }
-      // soft center glow
-      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxR * 0.35);
-      g.addColorStop(0, "rgba(" + b.r + "," + b.g + "," + b.b + ",0.18)");
-      g.addColorStop(1, "rgba(" + a.r + "," + a.g + "," + a.b + ",0)");
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(cx, cy, maxR * 0.35, 0, Math.PI * 2);
-      ctx.fill();
-    } else if (style === "stars") {
-      // Fixed night-sky stars (stay in place) + rare shooting stars
-      const pts = state.particles;
-      if (!state.shooters) state.shooters = [];
-      pts.forEach((p) => {
-        p.tw += (0.018 + (p.phase % 1) * 0.025) * speed;
-        const alpha = 0.1 + Math.pow(Math.abs(Math.sin(p.tw)), 2.2) * 0.9;
-        const rad = Math.max(0.7, p.r * (0.8 + sizeMul * 0.5) * (window.devicePixelRatio || 1));
-        const col = ((p.phase * 7) % 2 > 1) ? a : b;
-        ctx.fillStyle = "rgba(" + col.r + "," + col.g + "," + col.b + "," + alpha + ")";
-        ctx.beginPath();
-        ctx.arc(p.x * w, p.y * h, rad, 0, Math.PI * 2);
+        ctx.ellipse(cx, cy, cw * 0.55, ch, 0, 0, Math.PI * 2);
+        ctx.ellipse(cx - cw * 0.28, cy + ch * 0.15, cw * 0.35, ch * 0.85, 0, 0, Math.PI * 2);
+        ctx.ellipse(cx + cw * 0.3, cy + ch * 0.1, cw * 0.4, ch * 0.9, 0, 0, Math.PI * 2);
         ctx.fill();
       });
-      if (Math.random() < 0.01 * speed && state.shooters.length < 2) {
+
+      // Occasional thunder / lightning
+      if (Math.random() < 0.0022 * speed) spawnBolt(w, h);
+      if (state.flash > 0) {
+        ctx.fillStyle = "rgba(200,215,255," + (state.flash * 0.18) + ")";
+        ctx.fillRect(0, 0, w, h);
+        state.flash *= 0.88;
+        if (state.flash < 0.02) state.flash = 0;
+      }
+      state.bolts = state.bolts.filter((bolt) => {
+        bolt.life -= 0.06 * (speed / 0.42);
+        if (bolt.life <= 0) return false;
+        ctx.strokeStyle = "rgba(210,225,255," + (0.55 * bolt.life) + ")";
+        ctx.lineWidth = Math.max(1, 1.6 * sizeMul * dpr);
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        bolt.segs.forEach((s, i) => {
+          if (i === 0) ctx.moveTo(s.x, s.y);
+          ctx.lineTo(s.nx, s.ny);
+        });
+        ctx.stroke();
+        if (bolt.branch && bolt.segs.length > 3) {
+          const mid = bolt.segs[Math.floor(bolt.segs.length / 2)];
+          ctx.beginPath();
+          ctx.moveTo(mid.x, mid.y);
+          ctx.lineTo(mid.x + 20 * sizeMul, mid.y + 28 * sizeMul);
+          ctx.stroke();
+        }
+        return true;
+      });
+
+      // Rain drops
+      ctx.lineCap = "round";
+      state.particles.forEach((p) => {
+        p.y += p.spd * speed * 2.2;
+        p.x += p.drift * speed;
+        if (p.y > 1.05) {
+          p.y = -0.05;
+          p.x = Math.random();
+        }
+        if (p.x < -0.05) p.x = 1.05;
+        if (p.x > 1.05) p.x = -0.05;
+        const x0 = p.x * w;
+        const y0 = p.y * h;
+        const x1 = x0 + p.drift * w * 8;
+        const y1 = y0 + p.len * h;
+        ctx.strokeStyle = "rgba(" + a.r + "," + a.g + "," + a.b + ",0.45)";
+        ctx.lineWidth = Math.max(0.8, p.thick * sizeMul * dpr * 0.7);
+        ctx.beginPath();
+        ctx.moveTo(x0, y0);
+        ctx.lineTo(x1, y1);
+        ctx.stroke();
+      });
+    } else if (style === "stars") {
+      // Fixed night-sky stars + rare shooting stars
+      state.particles.forEach((p) => {
+        const tw = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(state.t * 1.4 + p.tw));
+        ctx.fillStyle = "rgba(" + a.r + "," + a.g + "," + a.b + "," + tw + ")";
+        ctx.beginPath();
+        ctx.arc(p.x * w, p.y * h, p.r * sizeMul * dpr * 0.5, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      if (Math.random() < 0.008 * speed) {
         state.shooters.push({
-          x: Math.random() * 0.85,
-          y: Math.random() * 0.25,
-          vx: 0.012 + Math.random() * 0.016,
-          vy: 0.007 + Math.random() * 0.012,
-          life: 1,
-          len: 12 + Math.random() * 18
+          x: Math.random(), y: Math.random() * 0.4,
+          vx: 0.008 + Math.random() * 0.01,
+          vy: 0.004 + Math.random() * 0.006,
+          life: 1
         });
       }
-      state.shooters = state.shooters.filter((s) => s.life > 0 && s.x < 1.15 && s.y < 1.15);
-      state.shooters.forEach((s) => {
-        s.x += s.vx * speed;
-        s.y += s.vy * speed;
-        s.life -= 0.015 * speed;
-        const x1 = s.x * w, y1 = s.y * h;
-        const x0 = (s.x - s.vx * s.len) * w, y0 = (s.y - s.vy * s.len) * h;
-        const grd = ctx.createLinearGradient(x1, y1, x0, y0);
-        grd.addColorStop(0, "rgba(" + b.r + "," + b.g + "," + b.b + "," + (0.95 * s.life) + ")");
+      state.shooters = state.shooters.filter((s) => {
+        s.x += s.vx * speed; s.y += s.vy * speed; s.life -= 0.02 * speed;
+        if (s.life <= 0) return false;
+        const x0 = s.x * w, y0 = s.y * h;
+        const x1 = (s.x - s.vx * 4) * w, y1 = (s.y - s.vy * 4) * h;
+        const grd = ctx.createLinearGradient(x0, y0, x1, y1);
+        grd.addColorStop(0, "rgba(" + a.r + "," + a.g + "," + a.b + "," + (0.7 * s.life) + ")");
         grd.addColorStop(1, "rgba(" + a.r + "," + a.g + "," + a.b + ",0)");
         ctx.strokeStyle = grd;
-        ctx.lineWidth = Math.max(1, 1.4 * sizeMul * (window.devicePixelRatio || 1));
+        ctx.lineWidth = Math.max(1, 1.4 * sizeMul * dpr);
         ctx.lineCap = "round";
         ctx.beginPath();
         ctx.moveTo(x1, y1);
         ctx.lineTo(x0, y0);
         ctx.stroke();
+        return true;
       });
     } else if (style === "constellation") {
       const pts = state.particles;
@@ -1563,10 +1666,11 @@ function setupHomeFx(wrapper) {
       pts.forEach((p) => {
         ctx.fillStyle = "rgba(" + b.r + "," + b.g + "," + b.b + ",0.85)";
         ctx.beginPath();
-        ctx.arc(p.x * w, p.y * h, 2.2 * (window.devicePixelRatio || 1), 0, Math.PI * 2);
+        ctx.arc(p.x * w, p.y * h, 2.2 * dpr, 0, Math.PI * 2);
         ctx.fill();
       });
     } else {
+      // orbs (default)
       state.particles.forEach((p, i) => {
         p.x += p.vx * speed;
         p.y += p.vy * speed;
@@ -1776,11 +1880,12 @@ function applyBackground() {
   save(); applyNewTabBackground();
 }
 function applyCloakPreset(id) {
-  const p = CLOAK_PRESETS[id];
+  const p = resolveCloakPreset(id);
   if (!p) return;
   cloak = { title: p.title, icon: p.icon };
   document.title = cloak.title;
-  document.getElementById("favicon").href = cloak.icon;
+  const fav = document.getElementById("favicon");
+  if (fav) fav.href = cloak.icon;
   syncAboutBlankChrome();
   loadCloakInputs();
   save();
@@ -1800,6 +1905,48 @@ function resetSettings() {
   document.title = "Veil";
   document.getElementById("favicon").href = FAVI;
   applyCSSVariables(); save(); renderChrome(); applyNewTabBackground();
+}
+
+async function clearLocalData() {
+  const ok = confirm("Clear all Veil cookies, local storage, and cache for this site?\n\nYou will be signed out.");
+  if (!ok) return;
+  try {
+    if (window.VeilAccess && typeof window.VeilAccess.signOut === "function") {
+      window.VeilAccess.signOut();
+    }
+  } catch (e) {}
+  try {
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && (k.indexOf("veil") === 0 || k.indexOf("veil_") === 0)) keys.push(k);
+    }
+    keys.forEach((k) => localStorage.removeItem(k));
+  } catch (e) {}
+  try {
+    const cookies = document.cookie.split(";");
+    cookies.forEach((c) => {
+      const name = c.split("=")[0].trim();
+      if (!name) return;
+      if (name.indexOf("veil") !== -1 || name.indexOf("veil_") === 0) {
+        document.cookie = name + "=; path=/; max-age=0; SameSite=Lax";
+        document.cookie = name + "=; path=" + (typeof BASE !== "undefined" && BASE ? BASE + "/" : "/") + "; max-age=0; SameSite=Lax";
+      }
+    });
+  } catch (e) {}
+  try {
+    if (caches && caches.keys) {
+      const names = await caches.keys();
+      await Promise.all(names.map((n) => caches.delete(n)));
+    }
+  } catch (e) {}
+  try {
+    if (navigator.serviceWorker) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map((r) => r.unregister()));
+    }
+  } catch (e) {}
+  location.reload();
 }
 
 async function setTransport(kind) {
@@ -2266,6 +2413,7 @@ on("transportLibcurl", () => setTransport("libcurl"));
 on("applyBackground", applyBackground);
 on("applyCloak", applyCloak);
 on("resetSettings", resetSettings);
+on("clearLocalData", () => { clearLocalData(); });
 document.getElementById("clearHistory")?.addEventListener("click", async () => {
   const ok = await veilConfirm("Clear history", "Are you sure you want to clear all history?");
   if (!ok) return;
@@ -2277,6 +2425,14 @@ document.addEventListener("click", (e) => {
   if (e.target.closest("#historyPanel") || e.target.closest("#menuHistory")) return;
   if (document.getElementById("historyPanel")?.classList.contains("open")) closeHistory();
 });
+const cloakPresetSelect = document.getElementById("cloakPresetSelect");
+if (cloakPresetSelect) {
+  cloakPresetSelect.addEventListener("change", () => {
+    const id = cloakPresetSelect.value;
+    if (!id) return;
+    applyCloakPreset(id);
+  });
+}
 document.querySelectorAll("[data-cloak]").forEach(b => { b.onclick = () => applyCloakPreset(b.dataset.cloak); });
 document.addEventListener("click", e => {
   if (!e.target.closest("#mainMenu") && !e.target.closest("#menuBtn")) closeMenu();

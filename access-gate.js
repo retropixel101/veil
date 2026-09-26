@@ -81,10 +81,11 @@
       stopLivePoll();
       return;
     }
+    /* Keep pending/unverified sessions for a long time so refresh stays signed in */
     var maxAge = 60 * 60 * 24 * 400;
-    if (user && !user.infinite && user.expires) {
+    if (user && user.hasAccess && !user.infinite && user.expires) {
       var left = Math.floor((Number(user.expires) - Date.now()) / 1000);
-      if (left > 0) maxAge = left;
+      if (left > 0) maxAge = Math.max(left, 60);
     }
     writeCookie(SESSION_KEY, token, maxAge);
     lastUser = user || null;
@@ -95,7 +96,8 @@
         infinite: user && user.infinite,
         status: user && user.status,
         remainingMs: user && user.remainingMs,
-        remainingLabel: user && user.remainingLabel
+        remainingLabel: user && user.remainingLabel,
+        hasAccess: user && user.hasAccess
       }));
     } catch (e) {}
     try {
@@ -657,9 +659,21 @@
         return;
       }
       if (r.data) {
+        /* Keep token on pending/expired/unverified so refresh stays signed in */
+        if (r.data.token) token = r.data.token;
+        if (
+          r.data.reason === "pending" ||
+          r.data.reason === "expired" ||
+          r.data.reason === "unverified" ||
+          r.data.reason === "signed_out" ||
+          (r.data.user && r.data.user.email)
+        ) {
+          if (token) setToken(token, r.data.user || null);
+        }
         handleAuthResult(r.data, token);
         return;
       }
+      /* Only clear when server truly has no session */
       clearToken();
       showGate(DEFAULT_MSG, false);
       showPanel("login");
