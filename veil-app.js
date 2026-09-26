@@ -1471,28 +1471,43 @@ function setupHomeFx(wrapper) {
   state.clouds = [];
 
   if (style === "rain") {
+    // Diagonal rain (top-left → bottom-right), varied length/opacity
     for (let i = 0; i < n; i++) {
       state.particles.push({
-        x: Math.random(),
-        y: Math.random(),
-        len: (0.012 + Math.random() * 0.028) * sizeMul,
-        spd: 0.004 + Math.random() * 0.008,
-        thick: 0.6 + Math.random() * 1.2,
-        drift: (Math.random() - 0.5) * 0.0015
+        x: Math.random() * 1.3 - 0.15,
+        y: Math.random() * 1.2 - 0.1,
+        len: (0.035 + Math.random() * 0.07) * sizeMul,
+        spd: 0.006 + Math.random() * 0.012,
+        thick: 0.9 + Math.random() * 1.6,
+        alpha: 0.25 + Math.random() * 0.55,
+        // strong diagonal: down + to the right (like reference)
+        ang: 0.45 + Math.random() * 0.25
       });
     }
-    const cloudN = Math.max(3, Math.min(10, Math.round(n / 10) + 2));
+    // Random organic clouds: varied blob count, size, darkness
+    const cloudN = Math.max(4, Math.min(12, Math.round(n / 8) + 3));
     for (let i = 0; i < cloudN; i++) {
+      const blobs = 4 + Math.floor(Math.random() * 5);
+      const parts = [];
+      for (let b = 0; b < blobs; b++) {
+        parts.push({
+          ox: (Math.random() - 0.5) * 0.9,
+          oy: (Math.random() - 0.5) * 0.55,
+          rx: 0.22 + Math.random() * 0.55,
+          ry: 0.35 + Math.random() * 0.55
+        });
+      }
       state.clouds.push({
-        x: Math.random(),
-        y: 0.04 + Math.random() * 0.22,
-        w: 0.14 + Math.random() * 0.22,
-        h: 0.04 + Math.random() * 0.05,
-        spd: 0.00015 + Math.random() * 0.00025,
-        alpha: 0.12 + Math.random() * 0.18
+        x: Math.random() * 1.1 - 0.05,
+        y: 0.02 + Math.random() * 0.28,
+        w: 0.16 + Math.random() * 0.32,
+        h: 0.05 + Math.random() * 0.09,
+        spd: 0.00008 + Math.random() * 0.00022,
+        dark: 0.08 + Math.random() * 0.28,
+        parts
       });
     }
-  } else {
+    } else {
     for (let i = 0; i < n; i++) {
       const isStars = style === "stars";
       state.particles.push({
@@ -1534,33 +1549,40 @@ function setupHomeFx(wrapper) {
     const b = hexToRgb(settings.animColorB);
 
     if (style === "rain") {
-      // Soft sky wash
-      const sky = ctx.createLinearGradient(0, 0, 0, h * 0.5);
-      sky.addColorStop(0, "rgba(" + a.r + "," + a.g + "," + a.b + ",0.08)");
+      // Soft storm sky
+      const sky = ctx.createLinearGradient(0, 0, 0, h * 0.55);
+      sky.addColorStop(0, "rgba(" + a.r + "," + a.g + "," + a.b + ",0.1)");
       sky.addColorStop(1, "rgba(0,0,0,0)");
       ctx.fillStyle = sky;
       ctx.fillRect(0, 0, w, h * 0.55);
 
-      // Clouds
+      // Organic multi-blob clouds (random shape / size / darkness)
       state.clouds.forEach((c) => {
         c.x += c.spd * speed;
-        if (c.x > 1.2) c.x = -0.25;
+        if (c.x > 1.25) c.x = -0.35;
         const cx = c.x * w;
         const cy = c.y * h;
         const cw = c.w * w;
         const ch = c.h * h;
-        ctx.fillStyle = "rgba(" + b.r + "," + b.g + "," + b.b + "," + c.alpha + ")";
+        const shade = Math.floor(40 + c.dark * 90);
+        ctx.fillStyle = "rgba(" + shade + "," + shade + "," + Math.min(255, shade + 12) + "," + (0.35 + c.dark) + ")";
         ctx.beginPath();
-        ctx.ellipse(cx, cy, cw * 0.55, ch, 0, 0, Math.PI * 2);
-        ctx.ellipse(cx - cw * 0.28, cy + ch * 0.15, cw * 0.35, ch * 0.85, 0, 0, Math.PI * 2);
-        ctx.ellipse(cx + cw * 0.3, cy + ch * 0.1, cw * 0.4, ch * 0.9, 0, 0, Math.PI * 2);
+        (c.parts || []).forEach((p) => {
+          ctx.ellipse(
+            cx + p.ox * cw,
+            cy + p.oy * ch,
+            Math.max(4, p.rx * cw * 0.55),
+            Math.max(3, p.ry * ch * 0.7),
+            0, 0, Math.PI * 2
+          );
+        });
         ctx.fill();
       });
 
-      // Occasional thunder / lightning
+      // Thunder / lightning (kept)
       if (Math.random() < 0.0022 * speed) spawnBolt(w, h);
       if (state.flash > 0) {
-        ctx.fillStyle = "rgba(200,215,255," + (state.flash * 0.18) + ")";
+        ctx.fillStyle = "rgba(200,215,255," + (state.flash * 0.2) + ")";
         ctx.fillRect(0, 0, w, h);
         state.flash *= 0.88;
         if (state.flash < 0.02) state.flash = 0;
@@ -1587,29 +1609,32 @@ function setupHomeFx(wrapper) {
         return true;
       });
 
-      // Rain drops
+      // Diagonal rain streaks — slanted down-right like the reference
       ctx.lineCap = "round";
       state.particles.forEach((p) => {
-        p.y += p.spd * speed * 2.2;
-        p.x += p.drift * speed;
-        if (p.y > 1.05) {
-          p.y = -0.05;
-          p.x = Math.random();
+        // angle from vertical (~25–40°), positive = to the right while falling
+        const tilt = p.ang; // ~0.55 rad
+        const step = (0.01 + p.spd) * speed * 1.1;
+        p.x += Math.sin(tilt) * step;
+        p.y += Math.cos(tilt * 0.15) * step * 1.35;
+        if (p.y > 1.12 || p.x > 1.25) {
+          p.x = Math.random() * 1.15 - 0.25;
+          p.y = -0.1 - Math.random() * 0.2;
         }
-        if (p.x < -0.05) p.x = 1.05;
-        if (p.x > 1.05) p.x = -0.05;
         const x0 = p.x * w;
         const y0 = p.y * h;
-        const x1 = x0 + p.drift * w * 8;
-        const y1 = y0 + p.len * h;
-        ctx.strokeStyle = "rgba(" + a.r + "," + a.g + "," + a.b + ",0.45)";
-        ctx.lineWidth = Math.max(0.8, p.thick * sizeMul * dpr * 0.7);
+        const streak = p.len * Math.min(w, h) * 1.15;
+        // draw along same diagonal (down + right)
+        const x1 = x0 + Math.sin(tilt) * streak;
+        const y1 = y0 + Math.cos(tilt * 0.2) * streak * 0.95;
+        ctx.strokeStyle = "rgba(" + a.r + "," + a.g + "," + a.b + "," + p.alpha + ")";
+        ctx.lineWidth = Math.max(0.85, p.thick * sizeMul * dpr * 0.5);
         ctx.beginPath();
         ctx.moveTo(x0, y0);
         ctx.lineTo(x1, y1);
         ctx.stroke();
       });
-    } else if (style === "stars") {
+        } else if (style === "stars") {
       // Fixed night-sky stars + rare shooting stars
       state.particles.forEach((p) => {
         const tw = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(state.t * 1.4 + p.tw));

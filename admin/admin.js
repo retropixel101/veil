@@ -213,7 +213,9 @@ function loadUsers() {
         '<div class="row actions" style="margin-top:12px">' +
         '<button type="button" class="kick">End access</button>' +
         (u.status === "banned" ? '<button type="button" class="unban">Remove ban</button>' : "") +
-        (!u.emailVerified ? '<button type="button" class="verify">Mark verified</button>' : "") +
+        (!u.emailVerified
+          ? '<button type="button" class="verify">Mark verified</button>'
+          : '<button type="button" class="deverify">De-verify email</button>') +
         '<button type="button" class="danger delacc">Delete account</button>' +
         "</div>" +
         '<div class="msg actmsg"></div>' +
@@ -277,11 +279,20 @@ function loadUsers() {
         };
       }
 
+      var deverify = div.querySelector(".deverify");
+      if (deverify) {
+        deverify.onclick = function (e) {
+          e.stopPropagation();
+          if (!confirm("De-verify " + u.email + "?\n\nThey must enter a new email code before pending/access.")) return;
+          postUser("/api/admin/users/deverify", u.email, {}, msg, "Email de-verified");
+        };
+      }
+
       var delacc = div.querySelector(".delacc");
       if (delacc) {
         delacc.onclick = function (e) {
           e.stopPropagation();
-          if (!confirm("Delete account " + u.email + "?\n\nThis removes the account completely. They must sign up and verify again.")) return;
+          if (!confirm("Delete account " + u.email + "?\n\nRemoves the account completely. They must create an account and verify email again.")) return;
           if (!confirm("Really delete " + u.email + "? This cannot be undone.")) return;
           postUser("/api/admin/users/delete", u.email, {}, msg, "Account deleted");
         };
